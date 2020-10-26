@@ -4,7 +4,7 @@
 
 	@file d3dApp.cpp
 	@author Frank Luna
-	@author Rudy Zhang
+	@contributor Rudy Zhang
 	@copyright 2020 All Rights Reserved.
 */
 
@@ -102,7 +102,10 @@ int D3DApp::Run()
 
 			if (!mAppPaused)
 			{
-				CalculateFrameStats();
+				if (titleBarStats)
+					UpdateTitleBarStats();
+
+				// The game loop
 				Update(mTimer);
 				Draw(mTimer);
 			}
@@ -465,6 +468,9 @@ bool D3DApp::InitDirect3D()
 			IID_PPV_ARGS(&md3dDevice)));
 	}
 
+	// Check for max supported feature level
+	CheckMaxFeatureSupport();
+
 	// 2 - Create the Fence and Descriptor Sizes.
 	ThrowIfFailed(md3dDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE,
 		IID_PPV_ARGS(&mFence)));
@@ -508,6 +514,26 @@ bool D3DApp::InitDirect3D()
 	CreateRtvAndDsvDescriptorHeaps();
 
 	return true;
+}
+
+void D3DApp::CheckMaxFeatureSupport()
+{
+	D3D_FEATURE_LEVEL featureLevels[4] = {
+		D3D_FEATURE_LEVEL_12_1,
+		D3D_FEATURE_LEVEL_12_0,
+		D3D_FEATURE_LEVEL_11_1,
+		D3D_FEATURE_LEVEL_11_0
+	};
+
+	D3D12_FEATURE_DATA_FEATURE_LEVELS featureLevelsInfo;
+	featureLevelsInfo.NumFeatureLevels = 4;
+	featureLevelsInfo.pFeatureLevelsRequested = featureLevels;
+	md3dDevice->CheckFeatureSupport(
+		D3D12_FEATURE_FEATURE_LEVELS,
+		&featureLevelsInfo,
+		sizeof(featureLevelsInfo));
+
+	dxFeatureLevel = featureLevelsInfo.MaxSupportedFeatureLevel;
 }
 
 void D3DApp::CreateCommandObjects()
@@ -624,7 +650,7 @@ D3D12_CPU_DESCRIPTOR_HANDLE D3DApp::DepthStencilView() const
 	return mDsvHeap->GetCPUDescriptorHandleForHeapStart();
 }
 
-void D3DApp::CalculateFrameStats()
+void D3DApp::UpdateTitleBarStats()
 {
 	// Code computes the average frames per second, and also the 
 	// average time it takes to render one frame.  These stats 
@@ -635,25 +661,40 @@ void D3DApp::CalculateFrameStats()
 
 	frameCnt++;
 
-	// Compute averages over one second period.
-	if ((mTimer.TotalTime() - timeElapsed) >= 1.0f)
+	// Only calc FPS and upate title bar once per second
+	float timeDiff = mTimer.TotalTime() - timeElapsed;
+	if (timeDiff < 1.0f)
+		return;
+
+	// Update FPS and MSPF values
+	float fps = (float)frameCnt; // fps = frameCnt / 1
+	float mspf = 1000.0f / fps;
+
+	// Quick and dirty title bar text (mostly for debugging)
+	std::wostringstream output;
+	output.precision(6);
+	output << mMainWndCaption <<
+		L"    Width: "		<< to_wstring(mClientWidth) <<
+		L"    Height: "		<< to_wstring(mClientHeight) <<
+		L"    FPS: "		<< to_wstring(frameCnt) <<
+		L"    Frame Time: "	<< to_wstring(mspf) << L"ms";
+
+	// Append the version of DirectX the app is using
+	switch (dxFeatureLevel)
 	{
-		float fps = (float)frameCnt; // fps = frameCnt / 1
-		float mspf = 1000.0f / fps;
-
-		wstring fpsStr = to_wstring(fps);
-		wstring mspfStr = to_wstring(mspf);
-
-		wstring windowText = mMainWndCaption +
-			L"    fps: " + fpsStr +
-			L"   mspf: " + mspfStr;
-
-		SetWindowText(mhMainWnd, windowText.c_str());
-
-		// Reset for next average.
-		frameCnt = 0;
-		timeElapsed += 1.0f;
+		case D3D_FEATURE_LEVEL_12_1: output << L"    DX 12.1"; break;
+		case D3D_FEATURE_LEVEL_12_0: output << L"    DX 12.0"; break;
+		case D3D_FEATURE_LEVEL_11_1: output << L"    DX 11.1"; break;
+		case D3D_FEATURE_LEVEL_11_0: output << L"    DX 11.0"; break;
+		default:                     output << L"    DX ???";  break;
 	}
+
+	SetWindowText(mhMainWnd, output.str().c_str());
+
+	// Reset for next average.
+	frameCnt = 0;
+	timeElapsed += 1.0f;
+	
 }
 
 void D3DApp::LogAdapters()

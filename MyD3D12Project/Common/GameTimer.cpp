@@ -3,7 +3,7 @@
 
 	@file GameTimer.cpp
 	@author Frank Luna
-	@author Rudy Zhang
+	@contributor Rudy Zhang
 	@copyright 2020 All Rights Reserved.
 */
 

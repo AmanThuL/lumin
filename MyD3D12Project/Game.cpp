@@ -1,4 +1,4 @@
-#include "../Common/d3dApp.h"
+#include "Common/d3dApp.h"
 #include <DirectXColors.h>
 
 using namespace DirectX;
@@ -112,5 +112,4 @@ void Game::Draw(const GameTimer& gt)
 	// done for simplicity.  Later we will show how to organize our rendering code
 	// so we do not have to wait per frame.
 	FlushCommandQueue();
-
 };

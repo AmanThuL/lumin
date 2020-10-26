@@ -96,6 +96,8 @@ protected:
 	bool InitMainWindow();
 	/// <summary>Initializes Direct3D by steps.</summary>
 	bool InitDirect3D();
+	/// <summary>Check the maximum supported feature level.</summary>
+	void CheckMaxFeatureSupport();
 	/// <summary>Creates the command queue, a command list allocator, and a command list.</summary>
 	void CreateCommandObjects();
 	/// <summary>Creates the swap chain and allows to recreate swap chain with different settings.</summary>
@@ -114,7 +116,7 @@ protected:
 	D3D12_CPU_DESCRIPTOR_HANDLE DepthStencilView()const;
 
 	/// <summary>Calculates the average frames per second and the average milliseconds per frame.</summary>
-	void CalculateFrameStats();
+	void UpdateTitleBarStats();
 
 	/// <summary>Enumerates all the adapters on a system.</summary>
 	void LogAdapters();
@@ -127,13 +129,13 @@ protected:
 
 	static D3DApp* mApp;
 
-	HINSTANCE mhAppInst = nullptr; // application instance handle
-	HWND      mhMainWnd = nullptr; // main window handle
-	bool      mAppPaused = false;  // is the application paused?
-	bool      mMinimized = false;  // is the application minimized?
-	bool      mMaximized = false;  // is the application maximized?
-	bool      mResizing = false;   // are the resize bars being dragged?
-	bool      mFullscreenState = false;// fullscreen enabled
+	HINSTANCE mhAppInst = nullptr;		// Application instance handle
+	HWND      mhMainWnd = nullptr;		// Main window handle
+	bool      mAppPaused = false;		// Is the application paused?
+	bool      mMinimized = false;		// Is the application minimized?
+	bool      mMaximized = false;		// Is the application maximized?
+	bool      mResizing = false;		// Are the resize bars being dragged?
+	bool      mFullscreenState = false;	// Fullscreen enabled
 
 	// Set true to use 4X MSAA (§4.1.8).  The default is false.
 	bool      m4xMsaaState = false;    // 4X MSAA enabled
@@ -142,16 +144,18 @@ protected:
 	// Used to keep track of the “delta-time” and game time (§4.4).
 	GameTimer mTimer;
 
-	Microsoft::WRL::ComPtr<IDXGIFactory4> mdxgiFactory;
-	Microsoft::WRL::ComPtr<IDXGISwapChain> mSwapChain;
-	Microsoft::WRL::ComPtr<ID3D12Device> md3dDevice;
+	D3D_FEATURE_LEVEL dxFeatureLevel;
 
-	Microsoft::WRL::ComPtr<ID3D12Fence> mFence;
+	Microsoft::WRL::ComPtr<IDXGIFactory4>	mdxgiFactory;
+	Microsoft::WRL::ComPtr<IDXGISwapChain>	mSwapChain;
+	Microsoft::WRL::ComPtr<ID3D12Device>	md3dDevice;
+
+	Microsoft::WRL::ComPtr<ID3D12Fence>	mFence;
 	UINT64 mCurrentFence = 0;
 
-	Microsoft::WRL::ComPtr<ID3D12CommandQueue> mCommandQueue;
-	Microsoft::WRL::ComPtr<ID3D12CommandAllocator> mDirectCmdListAlloc;
-	Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> mCommandList;
+	Microsoft::WRL::ComPtr<ID3D12CommandQueue>			mCommandQueue;
+	Microsoft::WRL::ComPtr<ID3D12CommandAllocator>		mDirectCmdListAlloc;
+	Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList>	mCommandList;
 
 	static const int SwapChainBufferCount = 2;
 	int mCurrBackBuffer = 0;
@@ -169,11 +173,12 @@ protected:
 	UINT mCbvSrvUavDescriptorSize = 0;
 
 	// Derived class should set these in derived constructor to customize starting values.
-	std::wstring mMainWndCaption = L"d3d App";
+	std::wstring	mMainWndCaption = L"DirectX App";
+	bool			titleBarStats = true;								// Show extra stats in title bar?
 	D3D_DRIVER_TYPE md3dDriverType = D3D_DRIVER_TYPE_HARDWARE;
-	DXGI_FORMAT mBackBufferFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
-	DXGI_FORMAT mDepthStencilFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
-	int mClientWidth = 800;
-	int mClientHeight = 600;
+	DXGI_FORMAT		mBackBufferFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
+	DXGI_FORMAT		mDepthStencilFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
+	int				mClientWidth = 800;
+	int				mClientHeight = 600;
 };
 
