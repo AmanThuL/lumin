@@ -4,7 +4,7 @@
 
 	@file d3dApp.h
 	@author Frank Luna
-	@author Rudy Zhang
+	@contributor Rudy Zhang
 	@copyright 2020 All Rights Reserved.
 */
 
@@ -29,105 +29,73 @@ class D3DApp
 {
 protected:
 
-	/// <summary>
-	/// Constructor that initializes the data members to default values.
-	/// </summary>
 	D3DApp(HINSTANCE hInstance);
 	D3DApp(const D3DApp& rhs) = delete;
 	D3DApp& operator=(const D3DApp& rhs) = delete;
 
-	/// <summary>
-	/// Destructor releases the COM interfaces the D3DApp acquires, and flushes the command queue.
-	/// </summary>
 	virtual ~D3DApp();
 
 public:
 
-	static D3DApp* GetApp();
+	// Static requirements for OS-level message processing
+	static D3DApp* GetAppInstance();
+	static LRESULT CALLBACK MainWndProc(
+		HWND hwnd,			// Window handle
+		UINT msg,			// Message
+		WPARAM wParam,		// Message's first parameter
+		LPARAM lParam);		// Message's second parameter
 
-	/// <returns>Returns a copy of the application instance handle.</returns>
+	// Trivial access functions
 	HINSTANCE AppInst()const;
-	/// <returns>Returns a copy of the main window handle.</returns>
 	HWND      MainWnd()const;
-	/// <returns>Returns the ratio of the back buffer width to its height.</returns>
 	float     AspectRatio()const;
 
-	/// <returns>Returns true is 4X MSAA is enabled and false otherwise.</returns>
 	bool Get4xMsaaState()const;
-	/// <summary>Enables/disables 4X MSAA.</summary>
 	void Set4xMsaaState(bool value);
 
-	/// <summary>This method wraps the application message loop.</summary>
 	int Run();
 
-	/// <summary>Initialize the application such as allocating resources, initializing objects, and setting up the 3D scene.</summary>
+	// Framework methods for override
 	virtual bool Initialize();
-	/// <summary>
-	/// Implements the window procedure function for the main application window.
-	/// Only need to override this method if there is a message that needs to be handled and D3DApp::MsgProc does not handle.
-	/// </summary>
 	virtual LRESULT MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
-
-protected:
-	/// <summary>Virtual function where you create the RTV and DSV descriptor heaps your application needs.</summary>
 	virtual void CreateRtvAndDsvDescriptorHeaps();
-	/// <summary>
-	/// Called when a WM_SIZE message is received. 
-	/// Some Direct3D properties need to be changed when the window is resized.
-	/// </summary>
 	virtual void OnResize();
-	/// <summary>This abstract method is called every frame and should be used to update the 3D application over time 
-	/// (e.g. perform animations, move the camera, do collision detection, check for user input, and etc.).
-	/// </summary>
+
+	// Pure virtual methods for setup and game functionality
 	virtual void Update(const GameTimer& gt) = 0;
-	/// <summary>
-	/// This abstract method is invoked every frame and is where rendering commands are issued to draw the current frame to the back buffer.
-	/// </summary>
 	virtual void Draw(const GameTimer& gt) = 0;
 
-	// Convenience overrides for handling mouse input.
+	// Convenience methods for handling mouse input, since we
+	// can easily grab mouse input from OS-level messages
 	virtual void OnMouseDown(WPARAM btnState, int x, int y) { }
 	virtual void OnMouseUp(WPARAM btnState, int x, int y) { }
 	virtual void OnMouseMove(WPARAM btnState, int x, int y) { }
+	virtual void OnMouseWheel(float wheelDelta, int x, int y) { }
 
 protected:
-
-	/// <summary>Initializes the main application window.</summary>
+	// Initialization methods
 	bool InitMainWindow();
-	/// <summary>Initializes Direct3D by steps.</summary>
 	bool InitDirect3D();
-	/// <summary>Check the maximum supported feature level.</summary>
 	void CheckMaxFeatureSupport();
-	/// <summary>Creates the command queue, a command list allocator, and a command list.</summary>
 	void CreateCommandObjects();
-	/// <summary>Creates the swap chain and allows to recreate swap chain with different settings.</summary>
 	void CreateSwapChain();
 
-	/// <summary>
-	/// Forces the CPU to wait until the GPU has finished processing all the commands in the queue.
-	/// </summary>
+	// Helper function for allocating a console window
+	void CreateConsoleWindow(int bufferLines, int bufferColumns, int windowLines, int windowColumns);
+
+	// CPU/GPU Synchronization method
 	void FlushCommandQueue();
 
-	/// <returns>Returns an ID3D12Resource to the current back buffer in the swap chain.</returns>
 	ID3D12Resource* CurrentBackBuffer()const;
-	/// <returns>Returns the RTV (render target view) to the current back buffer.</returns>
 	D3D12_CPU_DESCRIPTOR_HANDLE CurrentBackBufferView()const;
-	/// <returns>Returns the DSV (depth/stencil view) to the main depth/stencil buffer.</returns>
 	D3D12_CPU_DESCRIPTOR_HANDLE DepthStencilView()const;
 
-	/// <summary>Calculates the average frames per second and the average milliseconds per frame.</summary>
-	void UpdateTitleBarStats();
-
-	/// <summary>Enumerates all the adapters on a system.</summary>
 	void LogAdapters();
-	/// <summary>Enumerates all the outputs associated with an adapter.</summary>
 	void LogAdapterOutputs(IDXGIAdapter* adapter);
-	/// <summary>Enumerates all the display modes an output supports for a given format.</summary>
 	void LogOutputDisplayModes(IDXGIOutput* output, DXGI_FORMAT format);
 
 protected:
-
-	static D3DApp* mApp;
+	static D3DApp* mAppInstance;
 
 	HINSTANCE mhAppInst = nullptr;		// Application instance handle
 	HWND      mhMainWnd = nullptr;		// Main window handle
@@ -141,16 +109,13 @@ protected:
 	bool      m4xMsaaState = false;    // 4X MSAA enabled
 	UINT      m4xMsaaQuality = 0;      // quality level of 4X MSAA
 
-	// Used to keep track of the “delta-time” and game time (§4.4).
-	GameTimer mTimer;
-
 	D3D_FEATURE_LEVEL dxFeatureLevel;
 
-	Microsoft::WRL::ComPtr<IDXGIFactory4>	mdxgiFactory;
-	Microsoft::WRL::ComPtr<IDXGISwapChain>	mSwapChain;
-	Microsoft::WRL::ComPtr<ID3D12Device>	md3dDevice;
+	Microsoft::WRL::ComPtr<IDXGIFactory4>				mdxgiFactory;
+	Microsoft::WRL::ComPtr<IDXGISwapChain>				mSwapChain;
+	Microsoft::WRL::ComPtr<ID3D12Device>				md3dDevice;
 
-	Microsoft::WRL::ComPtr<ID3D12Fence>	mFence;
+	Microsoft::WRL::ComPtr<ID3D12Fence>					mFence;
 	UINT64 mCurrentFence = 0;
 
 	Microsoft::WRL::ComPtr<ID3D12CommandQueue>			mCommandQueue;
@@ -159,11 +124,11 @@ protected:
 
 	static const int SwapChainBufferCount = 2;
 	int mCurrBackBuffer = 0;
-	Microsoft::WRL::ComPtr<ID3D12Resource> mSwapChainBuffer[SwapChainBufferCount];
-	Microsoft::WRL::ComPtr<ID3D12Resource> mDepthStencilBuffer;
+	Microsoft::WRL::ComPtr<ID3D12Resource>				mSwapChainBuffer[SwapChainBufferCount];
+	Microsoft::WRL::ComPtr<ID3D12Resource>				mDepthStencilBuffer;
 
-	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> mRtvHeap;
-	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> mDsvHeap;
+	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>		mRtvHeap;
+	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap>		mDsvHeap;
 
 	D3D12_VIEWPORT mScreenViewport;
 	D3D12_RECT mScissorRect;
@@ -174,11 +139,17 @@ protected:
 
 	// Derived class should set these in derived constructor to customize starting values.
 	std::wstring	mMainWndCaption = L"DirectX App";
-	bool			titleBarStats = true;								// Show extra stats in title bar?
+	bool			titleBarStats = true;	// Show extra stats in title bar?
 	D3D_DRIVER_TYPE md3dDriverType = D3D_DRIVER_TYPE_HARDWARE;
 	DXGI_FORMAT		mBackBufferFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
 	DXGI_FORMAT		mDepthStencilFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
-	int				mClientWidth = 800;
-	int				mClientHeight = 600;
+	int				mClientWidth = 1600;
+	int				mClientHeight = 900;
+
+private:
+	// Used to keep track of the “delta-time” and game time (§4.4).
+	GameTimer mTimer;
+
+	void UpdateTitleBarStats();	// Puts debug info in the title bar
 };
 

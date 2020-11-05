@@ -123,6 +123,10 @@ public:
         UINT64 byteSize,
         Microsoft::WRL::ComPtr<ID3D12Resource>& uploadBuffer);
 
+    /// <summary>
+    /// Helper function to compile shaders at runtime.
+    /// </summary>
+    /// <returns>Returns HLSL errors and warnings.</returns>
     static Microsoft::WRL::ComPtr<ID3DBlob> CompileShader(
         const std::wstring& filename,
         const D3D_SHADER_MACRO* defines,
