@@ -8,6 +8,8 @@
 cbuffer cbPerObject : register(b0)
 {
     float4x4 gWorldViewProj;
+    float4 gPulseColor;
+    float gTime;
 };
 
 // Struct representing a single vertex worth of data
@@ -52,6 +54,9 @@ VertexOut VS(VertexIn vin)
 {
     VertexOut vout;
     
+    //vin.Pos.xy += 0.5f * sin(vin.Pos.x) * sin(3.0f * gTime);
+    //vin.Pos.z *= 0.6f * 0.4f * sin(2.0f * gTime);
+    
     // Transform to homogeneous clip space.
     vout.PosH = mul(float4(vin.Pos, 1.0f), gWorldViewProj);
     
@@ -59,4 +64,30 @@ VertexOut VS(VertexIn vin)
     vout.Color = vin.Color;
     
     return vout;
+}
+
+// --------------------------------------------------------
+// The entry point (PS method) for our pixel shader
+// 
+// - Input is the data coming down the pipeline (defined by the struct)
+// - Output is a single color (float4)
+// - Has a special semantic (SV_TARGET), which means 
+//    "put the output of this into the current render target"
+// --------------------------------------------------------
+float4 PS(VertexOut pin) : SV_Target
+{
+    // During rasterization vertex attributes output from the VS (or GS)
+    // are interpolated across the pixels of a triangle. The interpolated
+    // values are then fed into the pixel shader as input.
+    
+    const float pi = 3.14159;
+    
+    // Oscillate a value in [0,1] over time using a sine function.
+    float s = 0.5f * sin(2 * gTime - 0.25f * pi) + 0.5f;
+    
+    // Linearly interpolate between pin.Color and gPulseColor based on
+    // parameter s.
+    float c = lerp(pin.Color, gPulseColor, s);
+    
+    return pin.Color;
 }

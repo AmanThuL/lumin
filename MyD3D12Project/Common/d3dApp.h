@@ -97,6 +97,9 @@ protected:
 protected:
 	static D3DApp* mAppInstance;
 
+	// Used to keep track of the “delta-time” and game time (§4.4).
+	GameTimer mTimer;
+
 	HINSTANCE mhAppInst = nullptr;		// Application instance handle
 	HWND      mhMainWnd = nullptr;		// Main window handle
 	bool      mAppPaused = false;		// Is the application paused?
@@ -147,9 +150,6 @@ protected:
 	int				mClientHeight = 900;
 
 private:
-	// Used to keep track of the “delta-time” and game time (§4.4).
-	GameTimer mTimer;
-
 	void UpdateTitleBarStats();	// Puts debug info in the title bar
 };
 

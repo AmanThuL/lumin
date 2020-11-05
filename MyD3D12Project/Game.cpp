@@ -5,12 +5,15 @@
 	@author Rudy Zhang
 */
 
+#include <iostream>
+
 #include "Game.h"
 #include "Vertex.h"
 
 using Microsoft::WRL::ComPtr;
 using namespace DirectX;
 using namespace DirectX::PackedVector;
+using namespace std;
 
 Game::Game(HINSTANCE hInstance)
 	: D3DApp(
@@ -106,6 +109,12 @@ void Game::Update(const GameTimer& gt)
 	// Update the constant buffer with the latest worldViewProj matrix.
 	ObjectConstants objConstants;
 	XMStoreFloat4x4(&objConstants.WorldViewProj, XMMatrixTranspose(worldViewProj));
+	XMStoreFloat4(&objConstants.PulseColor, XMVECTOR(Colors::Black));
+	objConstants.Time = mTimer.TotalTime();
+
+	// Debug
+	//cout << "Pulse Color = " << objConstants.PulseColor.x << " " << objConstants.PulseColor.y << endl;
+
 	mObjectCB->CopyData(0, objConstants);
 }
 
@@ -291,8 +300,8 @@ void Game::BuildShadersAndInputLayout()
 {
 	HRESULT hr = S_OK;
 
-	mvsByteCode = d3dUtil::CompileShader(L"Shaders\\VertexShader.hlsl", nullptr, "VS", "vs_5_0");
-	mpsByteCode = d3dUtil::CompileShader(L"Shaders\\PixelShader.hlsl", nullptr, "PS", "ps_5_0");
+	mvsByteCode = d3dUtil::CompileShader(L"Shaders\\Default.hlsl", nullptr, "VS", "vs_5_0");
+	mpsByteCode = d3dUtil::CompileShader(L"Shaders\\Default.hlsl", nullptr, "PS", "ps_5_0");
 
 	mInputLayout =
 	{
