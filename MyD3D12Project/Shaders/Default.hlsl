@@ -1,15 +1,37 @@
+/*=============================================================================
+    Default.hlsl: Transforms and colors geometry.
+=============================================================================*/
 
-// Constant Buffer
-// - Allows us to define a buffer of individual variables 
-//    which will (eventually) hold data from our C++ code
-// - All non-pipeline variables that get their values from 
-//    our C++ code must be defined inside a Constant Buffer
-// - The name of the cbuffer itself is unimportant
+// Per Object Constant Buffer
+// - Only store constants that are associated with an object
+// - So far, the only constant data is the object's world matrix
+// - Implicitly padded to 256 bytes
 cbuffer cbPerObject : register(b0)
 {
-    float4x4 gWorldViewProj;
-    float4 gPulseColor;
-    float gTime;
+    float4x4 gWorld;
+};
+
+// Pass Constant Buffer
+// - Stores constant data that is fixed over a given rendering pass
+// - E.g. eye position, view/projection matrices, screen (render target)
+//        dimensions, game timing info, etc.
+// - Implicitly padded to 256 bytes
+cbuffer cbPass : register(b1)
+{
+    float4x4 gView;
+    float4x4 gInvView;
+    float4x4 gProj;
+    float4x4 gInvProj;
+    float4x4 gViewProj;
+    float4x4 gInvViewProj;
+    float3 gEyePosW;
+    float cbPerObjectPad1;
+    float2 gRenderTargetSize;
+    float2 gInvRenderTargetSize;
+    float gNearZ;
+    float gFarZ;
+    float gTotalTime;
+    float gDeltaTime;
 };
 
 // Struct representing a single vertex worth of data
@@ -24,7 +46,7 @@ struct VertexIn
 	//  |   Name          Semantic
 	//  |    |                |
 	//  v    v                v
-    float3 Pos			: POSITION;		// XYZ position
+    float3 PosL			: POSITION;		// XYZ position
     float4 Color		: COLOR;		// RGBA color
 };
 
@@ -53,12 +75,10 @@ struct VertexOut
 VertexOut VS(VertexIn vin)
 {
     VertexOut vout;
-    
-    //vin.Pos.xy += 0.5f * sin(vin.Pos.x) * sin(3.0f * gTime);
-    //vin.Pos.z *= 0.6f * 0.4f * sin(2.0f * gTime);
-    
+        
     // Transform to homogeneous clip space.
-    vout.PosH = mul(float4(vin.Pos, 1.0f), gWorldViewProj);
+    float4 posW = mul(float4(vin.PosL, 1.0f), gWorld);
+    vout.PosH = mul(posW, gViewProj);   // The multiplication is negligible on modern GPUs
     
     // Just pass vertex color into the pixel shader.
     vout.Color = vin.Color;
@@ -79,15 +99,6 @@ float4 PS(VertexOut pin) : SV_Target
     // During rasterization vertex attributes output from the VS (or GS)
     // are interpolated across the pixels of a triangle. The interpolated
     // values are then fed into the pixel shader as input.
-    
-    const float pi = 3.14159;
-    
-    // Oscillate a value in [0,1] over time using a sine function.
-    float s = 0.5f * sin(2 * gTime - 0.25f * pi) + 0.5f;
-    
-    // Linearly interpolate between pin.Color and gPulseColor based on
-    // parameter s.
-    float c = lerp(pin.Color, gPulseColor, s);
-    
+        
     return pin.Color;
 }
