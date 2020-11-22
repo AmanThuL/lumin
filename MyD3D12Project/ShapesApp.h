@@ -1,6 +1,15 @@
-/*=============================================================================
-	Game.h: Inherits from D3DApp class. Contains application-specific code.
-=============================================================================*/
+//*******************************************************************
+// Copyright Frank Luna (C) 2015 All Rights Reserved.
+//
+// ShapesApp.h:
+//
+// - Inherits from D3DApp class. Contains application-specific code.
+// - Demonstrates the sphere and cylinder generation code, places all 
+//   of the scene geometry in one big vertex and index buffer, and draw
+//   one object at a time (as the world matrix needs to be changed
+//   between objects).
+// - Hold down '1' key to view scene in wireframe mode.
+//*******************************************************************
 
 #pragma once
 
@@ -49,13 +58,13 @@ struct RenderItem
 	int BaseVertexLocation = 0;
 };
 
-class Game : public D3DApp
+class ShapesApp : public D3DApp
 {
 public:
-	Game(HINSTANCE hInstance);
-	Game(const Game& rhs) = delete;
-	Game& operator=(const Game& rhs) = delete;
-	~Game();
+	ShapesApp(HINSTANCE hInstance);
+	ShapesApp(const ShapesApp& rhs) = delete;
+	ShapesApp& operator=(const ShapesApp& rhs) = delete;
+	~ShapesApp();
 
 	virtual bool Initialize()override;
 

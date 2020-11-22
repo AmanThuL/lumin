@@ -25,8 +25,10 @@
     <ClCompile Include="Common\GeometryGenerator.cpp" />
     <ClCompile Include="Common\MathHelper.cpp" />
     <ClCompile Include="FrameResource.cpp" />
-    <ClCompile Include="Game.cpp" />
+    <ClCompile Include="LandAndWavesApp.cpp" />
+    <ClCompile Include="ShapesApp.cpp" />
     <ClCompile Include="Main.cpp" />
+    <ClCompile Include="Waves.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Common\d3dApp.h" />
@@ -36,8 +38,9 @@
     <ClInclude Include="Common\MathHelper.h" />
     <ClInclude Include="Common\UploadBuffer.h" />
     <ClInclude Include="FrameResource.h" />
-    <ClInclude Include="Game.h" />
-    <ClInclude Include="Vertex.h" />
+    <ClInclude Include="LandAndWavesApp.h" />
+    <ClInclude Include="ShapesApp.h" />
+    <ClInclude Include="Waves.h" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\Default.hlsl">

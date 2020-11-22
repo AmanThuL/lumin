@@ -1,12 +1,6 @@
-/**
-	The core Direct3D application class code that is
-	used to encapsulate a Direct3D sample application.
-
-	@file d3dApp.cpp
-	@author Frank Luna
-	@contributor Rudy Zhang
-	@copyright 2020 All Rights Reserved.
-*/
+//*******************************************************************
+// d3dApp.cpp by Frank Luna (C) 2015 All Rights Reserved.
+//*******************************************************************
 
 #include "d3dApp.h"
 
@@ -20,12 +14,12 @@ using namespace DirectX;
 // message handling function below can talk to our object
 D3DApp* D3DApp::mAppInstance = nullptr;
 
-// --------------------------------------------------------
+// ------------------------------------------------------------------
 // The global callback function for handling windows OS-level messages.
 //
 // This needs to be a global function (not part of a class), but we want
 // to forward the parameters to our class to properly handle them.
-// --------------------------------------------------------
+// ------------------------------------------------------------------
 LRESULT D3DApp::MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	// Forward hwnd on because we can get messages (e.g., WM_CREATE)
@@ -33,34 +27,35 @@ LRESULT D3DApp::MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	return D3DApp::GetAppInstance()->MsgProc(hwnd, msg, wParam, lParam);
 }
 
-// --------------------------------------------------------
+// ------------------------------------------------------------------
 // Return a reference to the D3DApp instance.
-// --------------------------------------------------------
+// ------------------------------------------------------------------
 D3DApp* D3DApp::GetAppInstance()
 {
 	return mAppInstance;
 }
 
-// --------------------------------------------------------
+// ------------------------------------------------------------------
 // Constructor - Initializes the data members to default values
 //
 // hInstance   - The application's OS-level handle (unique ID)
-// --------------------------------------------------------
+// ------------------------------------------------------------------
 D3DApp::D3DApp(HINSTANCE hInstance)
 	: mhAppInst(hInstance)
 {
 	// Save a static reference to this object.
-	//  - Since the OS-level message function must be a non-member (global) function, 
-	//    it won't be able to directly interact with our D3DApp object otherwise.
+	//  - Since the OS-level message function must be a non-member (global) 
+	//    function, it won't be able to directly interact with our D3DApp 
+	//    object otherwise.
 	//  - (Yes, a singleton might be a safer choice here).
 	assert(mAppInstance == nullptr);
 	mAppInstance = this;
 }
 
-// --------------------------------------------------------
-// Destructor - Release the COM interfaces the D3DApp acquires 
-// and flushes the command queue
-// --------------------------------------------------------
+// ------------------------------------------------------------------
+// Destructor - Release the COM interfaces the D3DApp acquires and 
+// flushes the command queue
+// ------------------------------------------------------------------
 D3DApp::~D3DApp()
 {
 	// Wait until the GPU is done processing the commands in the queue 
@@ -70,41 +65,41 @@ D3DApp::~D3DApp()
 		FlushCommandQueue();
 }
 
-// --------------------------------------------------------
+// ------------------------------------------------------------------
 // Returns a copy of the application instance handle.
-// --------------------------------------------------------
+// ------------------------------------------------------------------
 HINSTANCE D3DApp::AppInst() const
 {
 	return mhAppInst;
 }
 
-// --------------------------------------------------------
+// ------------------------------------------------------------------
 // Returns a copy of the main window handle.
-// --------------------------------------------------------
+// ------------------------------------------------------------------
 HWND D3DApp::MainWnd()const
 {
 	return mhMainWnd;
 }
 
-// --------------------------------------------------------
+// ------------------------------------------------------------------
 // Returns the ratio of the back buffer width to its height.
-// --------------------------------------------------------
+// ------------------------------------------------------------------
 float D3DApp::AspectRatio() const
 {
 	return static_cast<float>(mClientWidth) / mClientHeight;
 }
 
-// --------------------------------------------------------
+// ------------------------------------------------------------------
 // Returns true is 4X MSAA is enabled and false otherwise.
-// --------------------------------------------------------
+// ------------------------------------------------------------------
 bool D3DApp::Get4xMsaaState() const
 {
 	return m4xMsaaState;
 }
 
-// --------------------------------------------------------
+// ------------------------------------------------------------------
 // Enables/disables 4X MSAA.
-// --------------------------------------------------------
+// ------------------------------------------------------------------
 void D3DApp::Set4xMsaaState(bool value)
 {
 	if (m4xMsaaState != value)
@@ -117,9 +112,9 @@ void D3DApp::Set4xMsaaState(bool value)
 	}
 }
 
-// --------------------------------------------------------
+// ------------------------------------------------------------------
 // This method wraps the application message loop.
-// --------------------------------------------------------
+// ------------------------------------------------------------------
 int D3DApp::Run()
 {
 	MSG msg = { 0 };
@@ -163,10 +158,10 @@ int D3DApp::Run()
 
 #pragma region Framework Methods
 
-// --------------------------------------------------------
-// Initialize the application such as allocating resources, 
-// initializing objects, and setting up the 3D scene.
-// --------------------------------------------------------
+// ------------------------------------------------------------------
+// Initialize the application such as allocating resources, initializing 
+// objects, and setting up the 3D scene.
+// ------------------------------------------------------------------
 bool D3DApp::Initialize()
 {
 	if (!InitMainWindow())
@@ -181,12 +176,11 @@ bool D3DApp::Initialize()
 	return true;
 }
 
-// --------------------------------------------------------
-// Implements the window procedure function for the main 
-// application window. Only need to override this method if 
-// there is a message that needs to be handled and MsgProc 
-// does not handle.
-// --------------------------------------------------------
+// ------------------------------------------------------------------
+// Implements the window procedure function for the main application 
+// window. Only need to override this method if there is a message that 
+// needs to be handled and MsgProc does not handle.
+// ------------------------------------------------------------------
 LRESULT D3DApp::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	switch (msg)
@@ -251,13 +245,15 @@ LRESULT D3DApp::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 					// the buffers here because as the user continuously 
 					// drags the resize bars, a stream of WM_SIZE messages are
 					// sent to the window, and it would be pointless (and slow)
-					// to resize for each WM_SIZE message received from dragging
-					// the resize bars.  So instead, we reset after the user is 
-					// done resizing the window and releases the resize bars, which 
-					// sends a WM_EXITSIZEMOVE message.
+					// to resize for each WM_SIZE message received from 
+					// dragging the resize bars.  So instead, we reset after 
+					// the user is done resizing the window and releases the 
+					// resize bars, which sends a WM_EXITSIZEMOVE message.
 				}
-				else // API call such as SetWindowPos or mSwapChain->SetFullscreenState.
+				else
 				{
+					// API call such as SetWindowPos or 
+					// mSwapChain->SetFullscreenState.
 					OnResize();
 				}
 			}
@@ -285,8 +281,9 @@ LRESULT D3DApp::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		PostQuitMessage(0);
 		return 0;
 
-		// The WM_MENUCHAR message is sent when a menu is active and the user presses 
-		// a key that does not correspond to any mnemonic or accelerator key. 
+		// The WM_MENUCHAR message is sent when a menu is active and the user 
+		// presses a key that does not correspond to any mnemonic or 
+		// accelerator key. 
 	case WM_MENUCHAR:
 		// Don't beep when we alt-enter.
 		return MAKELRESULT(0, MNC_CLOSE);
@@ -325,10 +322,10 @@ LRESULT D3DApp::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 }
 
 
-// --------------------------------------------------------
-// Virtual function where you create the RTV and DSV descriptor 
-// heaps your application needs.
-// --------------------------------------------------------
+// ------------------------------------------------------------------
+// Virtual function where you create the RTV and DSV descriptor heaps 
+// your application needs.
+// ------------------------------------------------------------------
 void D3DApp::CreateRtvAndDsvDescriptorHeaps()
 {
 	D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc;
@@ -349,10 +346,10 @@ void D3DApp::CreateRtvAndDsvDescriptorHeaps()
 		&dsvHeapDesc, IID_PPV_ARGS(mDsvHeap.GetAddressOf())));
 }
 
-// --------------------------------------------------------
-// Called when a WM_SIZE message is received. Some Direct3D 
-// properties need to be changed when the window is resized.
-// --------------------------------------------------------
+// ------------------------------------------------------------------
+// Called when a WM_SIZE message is received. Some Direct3D properties 
+// need to be changed when the window is resized.
+// ------------------------------------------------------------------
 void D3DApp::OnResize()
 {
 	assert(md3dDevice);
@@ -395,8 +392,9 @@ void D3DApp::OnResize()
 	depthStencilDesc.DepthOrArraySize = 1;
 	depthStencilDesc.MipLevels = 1;
 
-	// Correction 11/12/2016: SSAO chapter requires an SRV to the depth buffer to read from 
-	// the depth buffer.  Therefore, because we need to create two views to the same resource:
+	// Correction 11/12/2016: SSAO chapter requires an SRV to the depth buffer
+	// to read from the depth buffer. Therefore, because we need to create two 
+	// views to the same resource:
 	//   1. SRV format: DXGI_FORMAT_R24_UNORM_X8_TYPELESS
 	//   2. DSV Format: DXGI_FORMAT_D24_UNORM_S8_UINT
 	// we need to create the depth buffer resource with a typeless format.  
@@ -419,7 +417,8 @@ void D3DApp::OnResize()
 		&optClear,
 		IID_PPV_ARGS(mDepthStencilBuffer.GetAddressOf())));
 
-	// Create descriptor to mip level 0 of entire resource using the format of the resource.
+	// Create descriptor to mip level 0 of entire resource using the format of 
+	// the resource.
 	D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc;
 	dsvDesc.Flags = D3D12_DSV_FLAG_NONE;
 	dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
@@ -427,7 +426,8 @@ void D3DApp::OnResize()
 	dsvDesc.Texture2D.MipSlice = 0;
 	md3dDevice->CreateDepthStencilView(mDepthStencilBuffer.Get(), &dsvDesc, DepthStencilView());
 
-	// Transition the resource from its initial state to be used as a depth buffer.
+	// Transition the resource from its initial state to be used as a depth 
+	// buffer.
 	mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(mDepthStencilBuffer.Get(),
 		D3D12_RESOURCE_STATE_COMMON, D3D12_RESOURCE_STATE_DEPTH_WRITE));
 
@@ -452,9 +452,9 @@ void D3DApp::OnResize()
 
 #pragma endregion
 
-// --------------------------------------------------------
+// ------------------------------------------------------------------
 // Initializes the main application window.
-// --------------------------------------------------------
+// ------------------------------------------------------------------
 bool D3DApp::InitMainWindow()
 {
 	WNDCLASS wc;
@@ -475,7 +475,8 @@ bool D3DApp::InitMainWindow()
 		return false;
 	}
 
-	// Compute window rectangle dimensions based on requested client area dimensions.
+	// Compute window rectangle dimensions based on requested client area 
+	// dimensions.
 	RECT R = { 0, 0, mClientWidth, mClientHeight };
 	AdjustWindowRect(&R, WS_OVERLAPPEDWINDOW, false);
 	int width = R.right - R.left;
@@ -495,14 +496,15 @@ bool D3DApp::InitMainWindow()
 	return true;
 }
 
-// --------------------------------------------------------
+// ------------------------------------------------------------------
 // Initializes Direct3D by steps.
-// --------------------------------------------------------
+// ------------------------------------------------------------------
 bool D3DApp::InitDirect3D()
 {
 #if defined(DEBUG) || defined(_DEBUG)
 	// Enable the D3D12 debug layer for debug mode builds.
-	// Direct3D will enable extra debugging and send debug messages to the VC++ output window.
+	// Direct3D will enable extra debugging and send debug messages to the VC++
+	// output window.
 	{
 		ComPtr<ID3D12Debug> debugController;
 		ThrowIfFailed(D3D12GetDebugInterface(IID_PPV_ARGS(&debugController)));
@@ -514,9 +516,9 @@ bool D3DApp::InitDirect3D()
 
 	// 1 - Try to create hardware device.
 	HRESULT hardwareResult = D3D12CreateDevice(
-		nullptr,                    // specifying null uses the primary display adapter
-		D3D_FEATURE_LEVEL_11_0,     // Direct3D 11 feature support
-		IID_PPV_ARGS(&md3dDevice)); // The COM ID of the ID3D12Device interface we want to create
+		nullptr,  // specifying null uses the primary display adapter
+		D3D_FEATURE_LEVEL_11_0,  // Direct3D 11 feature support
+		IID_PPV_ARGS(&md3dDevice));  // The COM ID of the ID3D12Device 
 
 	// If call to D3D12CreateDevice fails, we fallback to a WARP device 
 	// (Windows Advanced Rasterization Platform, a software adapter).
@@ -538,8 +540,9 @@ bool D3DApp::InitDirect3D()
 	ThrowIfFailed(md3dDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE,
 		IID_PPV_ARGS(&mFence)));
 
-	// Descriptor sizes can vary across GPUs so we need to query this information.
-	// We cache the descriptor sizes so that it is available when we need it for various types.
+	// Descriptor sizes can vary across GPUs so we need to query this 
+    // information. We cache the descriptor sizes so that it is available when 
+	// we need it for various types.
 	mRtvDescriptorSize = md3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 	mDsvDescriptorSize = md3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
 	mCbvSrvUavDescriptorSize = md3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
@@ -579,9 +582,9 @@ bool D3DApp::InitDirect3D()
 	return true;
 }
 
-// --------------------------------------------------------
+// ------------------------------------------------------------------
 // Check the maximum supported feature level.
-// --------------------------------------------------------
+// ------------------------------------------------------------------
 void D3DApp::CheckMaxFeatureSupport()
 {
 	D3D_FEATURE_LEVEL featureLevels[4] = {
@@ -602,43 +605,46 @@ void D3DApp::CheckMaxFeatureSupport()
 	dxFeatureLevel = featureLevelsInfo.MaxSupportedFeatureLevel;
 }
 
-// --------------------------------------------------------
-// Creates the command queue, a command list allocator, 
-// and a command list.
-// --------------------------------------------------------
+// ------------------------------------------------------------------
+// Creates the command queue, a command list allocator, and a command 
+// list.
+// ------------------------------------------------------------------
 void D3DApp::CreateCommandObjects()
 {
-	// The CPU submits commands to the GPU's command queue through the Direct3D API using command lists.
+	// The CPU submits commands to the GPU's command queue through the Direct3D 
+	// API using command lists.
 	D3D12_COMMAND_QUEUE_DESC queueDesc = {};
 	queueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
 	queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
 	ThrowIfFailed(md3dDevice->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&mCommandQueue)));
 
-	// As commands are recorded to the command list, they will be stored in the associated command allocator.
-	// When a command list is executed, the command queue will reference the commands in the allocator.
+	// As commands are recorded to the command list, they will be stored in the
+	// associated command allocator. When a command list is executed, the 
+	// command queue will reference the commands in the allocator.
 	ThrowIfFailed(md3dDevice->CreateCommandAllocator(
-		D3D12_COMMAND_LIST_TYPE_DIRECT,     // store a list of commands to directly be executed by the GPU
+		D3D12_COMMAND_LIST_TYPE_DIRECT,  // store a list of commands to directly be executed by the GPU
 		IID_PPV_ARGS(mDirectCmdListAlloc.GetAddressOf())));
 
 	ThrowIfFailed(md3dDevice->CreateCommandList(
-		0,                                  // Set to 0 for single GPU system
-		D3D12_COMMAND_LIST_TYPE_DIRECT,     // Type of command list
-		mDirectCmdListAlloc.Get(),          // Associated command allocator (allocator type must match list type)
-		nullptr,                            // Initial pipeline state of the command list
+		0,  // Set to 0 for single GPU system
+		D3D12_COMMAND_LIST_TYPE_DIRECT,  // Type of command list
+		mDirectCmdListAlloc.Get(),  // Associated command allocator (allocator type must match list type)
+		nullptr,  // Initial pipeline state of the command list
 		IID_PPV_ARGS(mCommandList.GetAddressOf())));
 
 	// Start off in a closed state.  This is because the first time we refer 
 	// to the command list we will Reset it, and it needs to be closed before
 	// calling Reset.
-	// All command lists must be closed except the one whose commands we are going to record.
+	// All command lists must be closed except the one whose commands we are 
+	// going to record.
 	// Create/Reset a command list = it is in an "open" state.
 	mCommandList->Close();
 }
 
-// --------------------------------------------------------
-// Creates the swap chain and allows to recreate swap chain 
-// with different settings.
-// --------------------------------------------------------
+// ------------------------------------------------------------------
+// Creates the swap chain and allows to recreate swap chain with 
+// different settings.
+// ------------------------------------------------------------------
 void D3DApp::CreateSwapChain()
 {
 	// Release the previous swapchain we will be recreating.
@@ -669,9 +675,10 @@ void D3DApp::CreateSwapChain()
 	sd.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
 
 	// Current flag - when the application is switching to full-screen mode,
-	// it will choose a display mode that best matches the current application window dimensions.
-	// Flag not specified - when the application is switching to full-screen mode,
-	// it will use the current desktop display mode.
+	// it will choose a display mode that best matches the current application 
+	// window dimensions.
+	// Flag not specified - when the application is switching to full-screen 
+	// mode, it will use the current desktop display mode.
 	sd.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
 
 	// Note: Swap chain uses queue to perform flush.
@@ -681,14 +688,14 @@ void D3DApp::CreateSwapChain()
 		mSwapChain.GetAddressOf()));
 }
 
-// --------------------------------------------------------
+// ------------------------------------------------------------------
 // Allocates a console window we can print to for debugging
 // 
 // bufferLines   - Number of lines in the overall console buffer
 // bufferColumns - Numbers of columns in the overall console buffer
 // windowLines   - Number of lines visible at once in the window
 // windowColumns - Number of columns visible at once in the window
-// --------------------------------------------------------
+// ------------------------------------------------------------------
 void D3DApp::CreateConsoleWindow(int bufferLines, int bufferColumns, int windowLines, int windowColumns)
 {
 	// Our temp console info struct
@@ -696,10 +703,14 @@ void D3DApp::CreateConsoleWindow(int bufferLines, int bufferColumns, int windowL
 
 	// Get the console info and set the number of lines
 	AllocConsole();
-	GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &coninfo);
+	GetConsoleScreenBufferInfo(
+		GetStdHandle(STD_OUTPUT_HANDLE), 
+		&coninfo);
 	coninfo.dwSize.Y = bufferLines;
 	coninfo.dwSize.X = bufferColumns;
-	SetConsoleScreenBufferSize(GetStdHandle(STD_OUTPUT_HANDLE), coninfo.dwSize);
+	SetConsoleScreenBufferSize(
+		GetStdHandle(STD_OUTPUT_HANDLE), 
+		coninfo.dwSize);
 
 	SMALL_RECT rect;
 	rect.Left = 0;
@@ -721,18 +732,19 @@ void D3DApp::CreateConsoleWindow(int bufferLines, int bufferColumns, int windowL
 
 
 
-// --------------------------------------------------------
-// Forces the CPU to wait until the GPU has finished processing 
-// all the commands in the queue.
-// --------------------------------------------------------
+// ------------------------------------------------------------------
+// Forces the CPU to wait until the GPU has finished processing all the 
+// commands in the queue.
+// ------------------------------------------------------------------
 void D3DApp::FlushCommandQueue()
 {
 	// Advance the fence value to mark commands up to this fence point.
 	mCurrentFence++;
 
-	// Add an instruction to the command queue to set a new fence point. Because we 
-	// are on the GPU timeline, the new fence point won't be set until the GPU finishes
-	// processing all the commands prior to this Signal().
+	// Add an instruction to the command queue to set a new fence point. 
+	// Because we are on the GPU timeline, the new fence point won't be set 
+	// until the GPU finishes processing all the commands prior to this 
+	// Signal().
 	ThrowIfFailed(mCommandQueue->Signal(mFence.Get(), mCurrentFence));
 
 	// Wait until the GPU has completed commands up to this fence point.
@@ -749,40 +761,39 @@ void D3DApp::FlushCommandQueue()
 	}
 }
 
-// --------------------------------------------------------
-// Returns an ID3D12Resource to the current back buffer in 
-// the swap chain.
-// --------------------------------------------------------
+// ------------------------------------------------------------------
+// Returns an ID3D12Resource to the current back buffer in the swap 
+// chain.
+// ------------------------------------------------------------------
 ID3D12Resource* D3DApp::CurrentBackBuffer() const
 {
 	return mSwapChainBuffer[mCurrBackBuffer].Get();
 }
 
-// --------------------------------------------------------
+// ------------------------------------------------------------------
 // Returns the RTV(render target view) to the current back buffer.
-// --------------------------------------------------------
+// ------------------------------------------------------------------
 D3D12_CPU_DESCRIPTOR_HANDLE D3DApp::CurrentBackBufferView() const
 {
 	// CD3DX12 constructor to offset to the RTV of the current back buffer.
 	return CD3DX12_CPU_DESCRIPTOR_HANDLE(
 		mRtvHeap->GetCPUDescriptorHandleForHeapStart(), // handle start
-		mCurrBackBuffer,                                // index to offset
-		mRtvDescriptorSize);                            // byte size of descriptor
+		mCurrBackBuffer,  // index to offset
+		mRtvDescriptorSize);  // byte size of descriptor
 }
 
-// --------------------------------------------------------
-// Returns the DSV (depth/stencil view) to the main depth/stencil 
-// buffer.
-// --------------------------------------------------------
+// ------------------------------------------------------------------
+// Returns the DSV (depth/stencil view) to the main depth/stencil buffer.
+// ------------------------------------------------------------------
 D3D12_CPU_DESCRIPTOR_HANDLE D3DApp::DepthStencilView() const
 {
 	return mDsvHeap->GetCPUDescriptorHandleForHeapStart();
 }
 
-// --------------------------------------------------------
-// Calculates the average frames per second and the average 
-// milliseconds per frame.
-// --------------------------------------------------------
+// ------------------------------------------------------------------
+// Calculates the average frames per second and the average milliseconds 
+// per frame.
+// ------------------------------------------------------------------
 void D3DApp::UpdateTitleBarStats()
 {
 	// Code computes the average frames per second, and also the 
@@ -807,19 +818,19 @@ void D3DApp::UpdateTitleBarStats()
 	std::wostringstream output;
 	output.precision(6);
 	output << mMainWndCaption <<
-		L"    Width: "		<< to_wstring(mClientWidth) <<
+		L"    Width: "		<< to_wstring(mClientWidth)	 <<
 		L"    Height: "		<< to_wstring(mClientHeight) <<
-		L"    FPS: "		<< to_wstring(frameCnt) <<
-		L"    Frame Time: "	<< to_wstring(mspf) << L"ms";
+		L"    FPS: "		<< to_wstring(frameCnt)		 <<
+		L"    Frame Time: " << to_wstring(mspf)			 << L"ms";
 
 	// Append the version of DirectX the app is using
 	switch (dxFeatureLevel)
 	{
-		case D3D_FEATURE_LEVEL_12_1: output << L"    DX 12.1"; break;
-		case D3D_FEATURE_LEVEL_12_0: output << L"    DX 12.0"; break;
-		case D3D_FEATURE_LEVEL_11_1: output << L"    DX 11.1"; break;
-		case D3D_FEATURE_LEVEL_11_0: output << L"    DX 11.0"; break;
-		default:                     output << L"    DX ???";  break;
+	case D3D_FEATURE_LEVEL_12_1: output << L"    DX 12.1"; break;
+	case D3D_FEATURE_LEVEL_12_0: output << L"    DX 12.0"; break;
+	case D3D_FEATURE_LEVEL_11_1: output << L"    DX 11.1"; break;
+	case D3D_FEATURE_LEVEL_11_0: output << L"    DX 11.0"; break;
+	default:                     output << L"    DX ???";  break;
 	}
 
 	SetWindowText(mhMainWnd, output.str().c_str());
@@ -827,12 +838,12 @@ void D3DApp::UpdateTitleBarStats()
 	// Reset for next average.
 	frameCnt = 0;
 	timeElapsed += 1.0f;
-	
+
 }
 
-// --------------------------------------------------------
+// ------------------------------------------------------------------
 // Enumerates all the adapters on a system.
-// --------------------------------------------------------
+// ------------------------------------------------------------------
 void D3DApp::LogAdapters()
 {
 	UINT i = 0;
@@ -861,9 +872,9 @@ void D3DApp::LogAdapters()
 	}
 }
 
-// --------------------------------------------------------
+// ------------------------------------------------------------------
 // Enumerates all the outputs associated with an adapter.
-// --------------------------------------------------------
+// ------------------------------------------------------------------
 void D3DApp::LogAdapterOutputs(IDXGIAdapter* adapter)
 {
 	UINT i = 0;
@@ -886,10 +897,10 @@ void D3DApp::LogAdapterOutputs(IDXGIAdapter* adapter)
 	}
 }
 
-// --------------------------------------------------------
-// Enumerates all the display modes an output supports for 
-// a given format.
-// --------------------------------------------------------
+// ------------------------------------------------------------------
+// Enumerates all the display modes an output supports for a given 
+// format.
+// ------------------------------------------------------------------
 void D3DApp::LogOutputDisplayModes(IDXGIOutput* output, DXGI_FORMAT format)
 {
 	UINT count = 0;

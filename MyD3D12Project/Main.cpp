@@ -1,5 +1,13 @@
+//*******************************************************************
+// Main.cpp:
+//
+// This is where the application entry point resides. It turns on
+// memory leak detection (in debug builds), creates one & only App
+// class object, initializes it and enters the App loop.
+//*******************************************************************
+
 #include <Windows.h>
-#include "Game.h"
+#include "ShapesApp.h"
 
 // --------------------------------------------------------
 // Entry point for a graphical (non-console) Windows application
@@ -21,7 +29,7 @@ int WINAPI WinMain(
 	{
 		// Create the Game object using
 		// the app handle we got from WinMain
-		Game theApp(hInstance);
+		ShapesApp theApp(hInstance);
 		if (!theApp.Initialize())
 			return 0;
 

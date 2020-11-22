@@ -1,10 +1,10 @@
-/**
-    General helper code.
-
-    @file d3dUtil.h
-    @author Frank Luna
-    @copyright 2015 All Rights Reserved.
-*/
+//*******************************************************************
+// Copyright Frank Luna (C) 2015 All Rights Reserved.
+//
+// d3dUtil.h:
+//
+// General helper code.
+//*******************************************************************
 
 #pragma once
 

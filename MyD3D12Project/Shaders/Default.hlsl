@@ -1,6 +1,10 @@
-/*=============================================================================
-    Default.hlsl: Transforms and colors geometry.
-=============================================================================*/
+//*******************************************************************
+// Copyright Frank Luna (C) 2015 All Rights Reserved.
+//
+// Default.hlsl:
+//
+// Transforms and colors geometry.
+//*******************************************************************
 
 // Per Object Constant Buffer
 // - Only store constants that are associated with an object

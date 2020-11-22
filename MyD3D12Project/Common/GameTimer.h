@@ -1,11 +1,11 @@
-/**
-    Measuring accurate time by querying the performance counter
-
-    @file GameTimer.h
-    @author Frank Luna
-    @author Rudy Zhang
-    @copyright 2020 All Rights Reserved.
-*/
+//*******************************************************************
+// Copyright Frank Luna (C) 2011 All Rights Reserved.
+//
+// GameTimer.h:
+//
+// Measures the total time since the application started, and the time
+// elapsed between frames.
+//*******************************************************************
 
 #ifndef GAMETIMER_H
 #define GAMETIMER_H

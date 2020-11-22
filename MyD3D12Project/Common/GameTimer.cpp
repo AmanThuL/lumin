@@ -1,11 +1,6 @@
-/**
-	Measuring accurate time by querying the performance counter
-
-	@file GameTimer.cpp
-	@author Frank Luna
-	@contributor Rudy Zhang
-	@copyright 2020 All Rights Reserved.
-*/
+//*******************************************************************
+// GameTimer.cpp by Frank Luna (C) 2011 All Rights Reserved.
+//*******************************************************************
 
 #include <windows.h>
 #include "GameTimer.h"

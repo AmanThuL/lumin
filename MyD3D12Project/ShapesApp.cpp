@@ -1,10 +1,10 @@
-/*=============================================================================
-	Game.cpp: Inherits from D3DApp class. Contains application-specific code.
-=============================================================================*/
+//*******************************************************************
+// ShapesApp.cpp by Frank Luna (C) 2015 All Rights Reserved.
+//*******************************************************************
 
 #include <iostream>
 
-#include "Game.h"
+#include "ShapesApp.h"
 
 using Microsoft::WRL::ComPtr;
 using namespace DirectX;
@@ -13,7 +13,7 @@ using namespace std;
 
 const int gNumFrameResources = 3;
 
-Game::Game(HINSTANCE hInstance)
+ShapesApp::ShapesApp(HINSTANCE hInstance)
 	: D3DApp(
 		hInstance)	 // The application's handle
 {
@@ -24,22 +24,22 @@ Game::Game(HINSTANCE hInstance)
 #endif
 }
 
-// --------------------------------------------------------
+// ------------------------------------------------------------------
 // Destructor - Clean up anything our game has created:
 //  - Release all DirectX objects created here
 //  - Delete any objects to prevent memory leaks
-// --------------------------------------------------------
-Game::~Game()
+// ------------------------------------------------------------------
+ShapesApp::~ShapesApp()
 {
 	if (md3dDevice != nullptr)
 		FlushCommandQueue();
 }
 
-// --------------------------------------------------------
-// Called once per program, after DirectX and the window
-// are initialized but before the game loop.
-// --------------------------------------------------------
-bool Game::Initialize()
+// ------------------------------------------------------------------
+// Called once per program, after DirectX and the window are 
+// initialized but before the game loop.
+// ------------------------------------------------------------------
+bool ShapesApp::Initialize()
 {
 	if (!D3DApp::Initialize())
 		return false;
@@ -68,11 +68,11 @@ bool Game::Initialize()
 	return true;
 }
 
-// --------------------------------------------------------
-// Handle resizing DirectX "stuff" to match the new window size.
-// For instance, updating our projection matrix's aspect ratio.
-// --------------------------------------------------------
-void Game::OnResize()
+// ------------------------------------------------------------------
+// Handle resizing DirectX "stuff" to match the new window size. For 
+// instance, updating our projection matrix's aspect ratio.
+// ------------------------------------------------------------------
+void ShapesApp::OnResize()
 {
 	D3DApp::OnResize();
 
@@ -83,13 +83,13 @@ void Game::OnResize()
 	XMStoreFloat4x4(&mProj, P);
 }
 
-// --------------------------------------------------------
-// Called every frame and should be used to update the 3D 
-// application over time.
-// E.g. Perform animations, move the camera, do collision 
-// detection, check for user input, and etc.).
-// --------------------------------------------------------
-void Game::Update(const GameTimer& gt)
+// ------------------------------------------------------------------
+// Called every frame and should be used to update the 3D application 
+// over time.
+// E.g. Perform animations, move the camera, do collision detection, 
+// check for user input, and etc.).
+// ------------------------------------------------------------------
+void ShapesApp::Update(const GameTimer& gt)
 {
 	OnKeyboardInput(gt);
 	UpdateCamera(gt);
@@ -113,11 +113,11 @@ void Game::Update(const GameTimer& gt)
 	UpdateMainPassCB(gt);
 }
 
-// --------------------------------------------------------
-// Invoked every frame and is where rendering commands are 
-// issued to draw the current frame to the back buffer.
-// --------------------------------------------------------
-void Game::Draw(const GameTimer& gt)
+// ------------------------------------------------------------------
+// Invoked every frame and is where rendering commands are issued to 
+// draw the current frame to the back buffer.
+// ------------------------------------------------------------------
+void ShapesApp::Draw(const GameTimer& gt)
 {
 	auto cmdListAlloc = mCurrFrameResource->CmdListAlloc;
 
@@ -166,7 +166,8 @@ void Game::Draw(const GameTimer& gt)
 	auto passCbvHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(mCbvHeap->GetGPUDescriptorHandleForHeapStart());
 	passCbvHandle.Offset(passCbvIndex, mCbvSrvUavDescriptorSize);
 
-	// Set the descriptor table identifying the resource we want to bind to the pipeline.
+	// Set the descriptor table identifying the resource we want to bind to the
+	// pipeline.
 	mCommandList->SetGraphicsRootDescriptorTable(1, passCbvHandle);
 
 	DrawRenderItems(mCommandList.Get(), mOpaqueRitems);
@@ -189,23 +190,23 @@ void Game::Draw(const GameTimer& gt)
 	// Advance the fence value to mark commands up to this fence point.
 	mCurrFrameResource->Fence = ++mCurrentFence;
 
-	// Add an instruction to the command queue to set a new fence point.
-	// Because we are on the GPU timeline, the new fence point won't be
-	// set until the GPU finishes processing all the commands prior to
-	// this Signal().
+	// Add an instruction to the command queue to set a new fence point. 
+	// Because we are on the GPU timeline, the new fence point won't be set 
+	// until the GPU finishes processing all the commands prior to this
+	// Signal().
 	mCommandQueue->Signal(mFence.Get(), mCurrentFence);
 
-	// Note that GPU could still be working on commands from previous
-	// frames, but that is okay, because we are not touching any frame
-	// resources associated with those frames.
+	// Note that GPU could still be working on commands from previous frames, 
+	// but that is okay, because we are not touching any frame resources 
+	// associated with those frames.
 }
 
 #pragma region Update Methods
 
-// --------------------------------------------------------
+// ------------------------------------------------------------------
 // Check for keyboard input per frame.
-// --------------------------------------------------------
-void Game::OnKeyboardInput(const GameTimer& gt)
+// ------------------------------------------------------------------
+void ShapesApp::OnKeyboardInput(const GameTimer& gt)
 {
 	if (GetAsyncKeyState('1') & 0x8000)
 		mIsWireframe = true;
@@ -213,10 +214,10 @@ void Game::OnKeyboardInput(const GameTimer& gt)
 		mIsWireframe = false;
 }
 
-// --------------------------------------------------------
+// ------------------------------------------------------------------
 // Update camera view matrix.
-// --------------------------------------------------------
-void Game::UpdateCamera(const GameTimer& gt)
+// ------------------------------------------------------------------
+void ShapesApp::UpdateCamera(const GameTimer& gt)
 {	
 	// Convert Spherical to Cartesian coordinates.
 	float x = mRadius * sinf(mPhi) * cosf(mTheta);
@@ -232,11 +233,11 @@ void Game::UpdateCamera(const GameTimer& gt)
 	XMStoreFloat4x4(&mView, view);
 }
 
-// --------------------------------------------------------
-// Update the per object constant buffer only when an object's 
-// world matrix changes.
-// --------------------------------------------------------
-void Game::UpdateObjectCBs(const GameTimer& gt)
+// ------------------------------------------------------------------
+// Update the per object constant buffer only when an object's world
+// matrix changes.
+// ------------------------------------------------------------------
+void ShapesApp::UpdateObjectCBs(const GameTimer& gt)
 {
 	auto currObjectCB = mCurrFrameResource->ObjectCB.get();
 	for (auto& e : mAllRitems) 
@@ -258,11 +259,10 @@ void Game::UpdateObjectCBs(const GameTimer& gt)
 	}
 }
 
-// --------------------------------------------------------
-// Update the per pass constant buffer only once per 
-// rendering pass.
-// --------------------------------------------------------
-void Game::UpdateMainPassCB(const GameTimer& gt)
+// ------------------------------------------------------------------
+// Update the per pass constant buffer only once per rendering pass.
+// ------------------------------------------------------------------
+void ShapesApp::UpdateMainPassCB(const GameTimer& gt)
 {
 	XMMATRIX view = XMLoadFloat4x4(&mView);
 	XMMATRIX proj = XMLoadFloat4x4(&mProj);
@@ -293,15 +293,15 @@ void Game::UpdateMainPassCB(const GameTimer& gt)
 #pragma endregion
 
 
-// --------------------------------------------------------
-// Create a new descriptor heap to store a mixture of constant
-// buffer, shader resource, and unordered access descriptors.
-// --------------------------------------------------------
-void Game::BuildDescriptorHeaps()
+// ------------------------------------------------------------------
+// Create a new descriptor heap to store a mixture of constant buffer, 
+// shader resource, and unordered access descriptors.
+// ------------------------------------------------------------------
+void ShapesApp::BuildDescriptorHeaps()
 {
-	// If we have 3 frame resources and n render items, then we have three 3n object
-	// constant buffers and 3 pass constant buffers. Hence we need 3(n+1) constant
-	// buffer views (CBVs).
+	// If we have 3 frame resources and n render items, then we have three 3n 
+	// object constant buffers and 3 pass constant buffers. Hence we need 
+	// 3(n+1) constant buffer views (CBVs).
 
 	UINT objCount = (UINT)mOpaqueRitems.size();
 
@@ -309,7 +309,8 @@ void Game::BuildDescriptorHeaps()
 	// +1 for the perPass CBV for each frame resource.
 	UINT numDescriptors = (objCount + 1) * gNumFrameResources;
 
-	// Save an offset to the start of the pass CBVs. These are the last 3 descriptors.
+	// Save an offset to the start of the pass CBVs. These are the last 3 
+	// descriptors.
 	mPassCbvOffset = objCount * gNumFrameResources;
 
 	D3D12_DESCRIPTOR_HEAP_DESC cbvHeapDesc;
@@ -321,15 +322,16 @@ void Game::BuildDescriptorHeaps()
 		IID_PPV_ARGS(&mCbvHeap)));
 }
 
-// --------------------------------------------------------
-// Create constant buffer views by filling out CBV descriptor
-// instances and calling the method that creates CBV.
-// --------------------------------------------------------
-void Game::BuildConstantBufferViews()
+// ------------------------------------------------------------------
+// Create constant buffer views by filling out CBV descriptor instances 
+// and calling the method that creates CBV.
+// ------------------------------------------------------------------
+void ShapesApp::BuildConstantBufferViews()
 {
 	// Populate the CBV heap:
 	// Assume k = 0, 1, 2.
-	// Descriptors k to kn-1 contain the object CBVs for the k-th frame resource.
+	// Descriptors k to kn-1 contain the object CBVs for the k-th frame 
+	// resource.
 	// Descriptors 3n, 3n+1, 3n+2 contain the pas CBVs for the 0th, 1st, 2nd 
 	// frame resource, respectively.
 
@@ -391,38 +393,38 @@ void Game::BuildConstantBufferViews()
 	}
 }
 
-// --------------------------------------------------------
-// Create a root signature that defines what resources the
-// application will bind to the rendering pipeline before a
-// draw call can be executed and where those resources get
-// mapped to shader input registers.
-// --------------------------------------------------------
-void Game::BuildRootSignature()
+// ------------------------------------------------------------------
+// Create a root signature that defines what resources the application 
+// will bind to the rendering pipeline before a draw call can be 
+// executed and where those resources get mapped to shader input 
+// registers.
+// ------------------------------------------------------------------
+void ShapesApp::BuildRootSignature()
 {
-	// - Shader programs typically require resources as input (constant buffers,
-	// textures, samplers). The root signature defines what resources need to
-	// be bound to the pipeline before issuing a draw call and how those resources
-	// get mapped to shader input registers.
-	// - If we think of the shader programs as a function, and the input resources 
-	// as function parameters, then the root signature can be thought of as 
-	// defining the function signature.
+	// - Shader programs typically require resources as input (constant 
+	// buffers, textures, samplers). The root signature defines what resources 
+	// need to be bound to the pipeline before issuing a draw call and how 
+	// those resources get mapped to shader input registers.
+	// - If we think of the shader programs as a function, and the input 
+	// resources as function parameters, then the root signature can be thought
+	// of as defining the function signature.
 	// - A root signature is defined by an array of root parameters.
 	// - A root parameter can be one of three types:
 	//		+ Descriptor table
 	//		+ Root descriptor
 	//		+ Root constant
 
-	// =================================================================================
-	// The code below creates 2 root parameters that both expects 2 descriptor tables of 
-	// 1 CBV each that gets bound to constant buffer register 0 and 1 (i.e., register(b0)) 
-	// in the HLSL code).
+	// ========================================================================
+	// The code below creates 2 root parameters that both expects 2 descriptor 
+	// tables of 1 CBV each that gets bound to constant buffer register 0 and 1
+	// (i.e., register(b0)) in the HLSL code).
 
 	// Create a single descriptor table of CBVs.
 	CD3DX12_DESCRIPTOR_RANGE cbvTable0;
 	cbvTable0.Init(
-		D3D12_DESCRIPTOR_RANGE_TYPE_CBV,	// Descriptor type
-		1,									// Descriptor count
-		0);									// Base shader register arguments are bound to for this root parameter
+		D3D12_DESCRIPTOR_RANGE_TYPE_CBV,  // Descriptor type
+		1,  // Descriptor count
+		0);  // Base shader register arguments are bound to for this root parameter
 
 	CD3DX12_DESCRIPTOR_RANGE cbvTable1;
 	cbvTable1.Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 1);
@@ -435,14 +437,14 @@ void Game::BuildRootSignature()
 		1,				// Number of ranges
 		&cbvTable0);	// Pointer to array of ranges
 	slotRootParameter[1].InitAsDescriptorTable(1, &cbvTable1);
-	// =================================================================================
+	// ========================================================================
 
 	// A root signature is an array of root parameters.
 	CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(2, slotRootParameter, 0, nullptr,
 		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
-	// Create a root signature with a single slot which points to a descriptor range 
-	// consisting of a single constant buffer.
+	// Create a root signature with a single slot which points to a descriptor 
+	// range consisting of a single constant buffer.
 	ComPtr<ID3DBlob> serializedRootSig = nullptr;
 	ComPtr<ID3DBlob> errorBlob = nullptr;
 	HRESULT hr = D3D12SerializeRootSignature(&rootSigDesc, D3D_ROOT_SIGNATURE_VERSION_1,
@@ -461,12 +463,12 @@ void Game::BuildRootSignature()
 		IID_PPV_ARGS(&mRootSignature)));
 }
 
-// --------------------------------------------------------
-// Compile shader programs to a portable bycode, and provide
-// Direct3D with a description of the vertex structure in the
-// form of an input layout description.
-// --------------------------------------------------------
-void Game::BuildShadersAndInputLayout()
+// ------------------------------------------------------------------
+// Compile shader programs to a portable bycode, and provide Direct3D
+// with a description of the vertex structure in the form of an input 
+// layout description.
+// ------------------------------------------------------------------
+void ShapesApp::BuildShadersAndInputLayout()
 {
 	HRESULT hr = S_OK;
 
@@ -480,11 +482,11 @@ void Game::BuildShadersAndInputLayout()
 	};
 }
 
-// --------------------------------------------------------
-// Build the geometry buffers, caches the necessary drawing
-// quantities, and draws the objects.
-// --------------------------------------------------------
-void Game::BuildShapeGeometry()
+// ------------------------------------------------------------------
+// Build the geometry buffers, caches the necessary drawing quantities,
+// and draws the objects.
+// ------------------------------------------------------------------
+void ShapesApp::BuildShapeGeometry()
 {
 	GeometryGenerator geoGen;
 	GeometryGenerator::MeshData box = geoGen.CreateBox(1.5f, 0.5f, 1.5f, 3);
@@ -493,24 +495,26 @@ void Game::BuildShapeGeometry()
 	GeometryGenerator::MeshData cylinder = geoGen.CreateCylinder(0.5f, 0.3f, 3.0f, 20, 20);
 	
 	//
-	// We are concatenating all the geometry into one big vertex/index 
-	// buffer. So define the regions in the buffer each submesh covers.
+	// We are concatenating all the geometry into one big vertex/index buffer. 
+	// So define the regions in the buffer each submesh covers.
 	//
 
-	// Cache the vertex offsets to each object in the concatenated vertex buffer.
+	// Cache the vertex offsets to each object in the concatenated vertex 
+	// buffer.
 	UINT boxVertexOffset = 0;
 	UINT gridVertexOffset = (UINT)box.Vertices.size();
 	UINT sphereVertexOffset = gridVertexOffset + (UINT)grid.Vertices.size();
 	UINT cylinderVertexOffset = sphereVertexOffset + (UINT)sphere.Vertices.size();
 
-	// Cache the starting index for each object in the concatenated index buffer.
+	// Cache the starting index for each object in the concatenated index 
+	// buffer.
 	UINT boxIndexOffset = 0;
 	UINT gridIndexOffset = (UINT)box.Indices32.size();
 	UINT sphereIndexOffset = gridIndexOffset + (UINT)grid.Indices32.size();
 	UINT cylinderIndexOffset = sphereIndexOffset + (UINT)sphere.Indices32.size();
 
-	// Define the SubmeshGeometry that cover different 
-	// regions of the vertex/index buffers.
+	// Define the SubmeshGeometry that cover different regions of the 
+	// vertex/index buffers.
 
 	SubmeshGeometry boxSubmesh;
 	boxSubmesh.IndexCount = (UINT)box.Indices32.size();
@@ -533,8 +537,8 @@ void Game::BuildShapeGeometry()
 	cylinderSubmesh.BaseVertexLocation = cylinderVertexOffset;
 
 	//
-	// Extract the vertex elements we are interested in and pack the
-	// vertices of all the meshes into one vertex buffer.
+	// Extract the vertex elements we are interested in and pack the vertices 
+	// of all the meshes into one vertex buffer.
 	//
 
 	auto totalVertexCount =
@@ -607,16 +611,16 @@ void Game::BuildShapeGeometry()
 	mGeometries[geo->Name] = std::move(geo);
 }
 
-// --------------------------------------------------------
-// Build an aggregate pipeline state object to validate all
-// the state is compatible and the driver can generate all
-// the code up front to program the hardware state.
-// --------------------------------------------------------
-void Game::BuildPSOs()
+// ------------------------------------------------------------------
+// Build an aggregate pipeline state object to validate all the state 
+// is compatible and the driver can generate all the code up front to 
+// program the hardware state.
+// ------------------------------------------------------------------
+void ShapesApp::BuildPSOs()
 {
-	// In the new Direct3D 12 model, the driver can generate all the code needed
-	// to program the pipeline state at initialization time because we specify the
-	// majority of pipeline state as an aggregate.
+	// In the new Direct3D 12 model, the driver can generate all the code 
+	// needed to program the pipeline state at initialization time because we 
+	// specify the majority of pipeline state as an aggregate.
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC opaquePsoDesc;
 
 	//
@@ -658,32 +662,29 @@ void Game::BuildPSOs()
 	ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&opaqueWireframePsoDesc, IID_PPV_ARGS(&mPSOs["opaque_wireframe"])));
 }
 
-// --------------------------------------------------------
-// Build a circular array of the resources the CPU needs to
-// modify each frame to keep both CPU and GPU busy.
-// --------------------------------------------------------
-void Game::BuildFrameResources()
+// ------------------------------------------------------------------
+// Build a circular array of the resources the CPU needs to modify 
+// each frame to keep both CPU and GPU busy.
+// ------------------------------------------------------------------
+void ShapesApp::BuildFrameResources()
 {
-	// Having multiple frame resources do not prevent any waiting,
-	// but it helps us keep the GPU fed. While the GPU is processing
-	// commands from frame n, it allows the CPU to continue on to
-	// build and submit commands for frames n+1 and n+2. This helps
-	// keep the command queue nonempty so that the GPU always has work
-	// to do.
+	// Having multiple frame resources do not prevent any waiting, but it helps
+	// us keep the GPU fed. While the GPU is processing commands from frame n, 
+	// it allows the CPU to continue on to build and submit commands for frames
+	// n+1 and n+2. This helps keep the command queue nonempty so that the GPU
+	// always has work to do.
 	for (int i = 0; i < gNumFrameResources; ++i)
 	{
-		mFrameResources.push_back(std::make_unique<FrameResource>(
-			md3dDevice.Get(), 1, (UINT)mAllRitems.size()));
+		mFrameResources.push_back(std::make_unique<FrameResource>(md3dDevice.Get(), 1, (UINT)mAllRitems.size()));
 	}
 }
 
-// --------------------------------------------------------
-// Define and build scene render items. All the render items
-// share the same MeshGeometry, we use the DrawArgs to get
-// the DrawIndexedInstanced parameters to draw a subregion of
-// the vertex/index buffers.
-// --------------------------------------------------------
-void Game::BuildRenderItems()
+// ------------------------------------------------------------------
+// Define and build scene render items. All the render items share the 
+// same MeshGeometry, we use the DrawArgs to get the DrawIndexedInstanced 
+// parameters to draw a subregion of the vertex/index buffers.
+// ------------------------------------------------------------------
+void ShapesApp::BuildRenderItems()
 {
 	auto boxRitem = std::make_unique<RenderItem>();
 	XMStoreFloat4x4(&boxRitem->World, 
@@ -775,10 +776,10 @@ void Game::BuildRenderItems()
 	}
 }
 
-// --------------------------------------------------------
+// ------------------------------------------------------------------
 // Load and build the skull geometry from file.
-// --------------------------------------------------------
-void Game::BuildSkullGeometry()
+// ------------------------------------------------------------------
+void ShapesApp::BuildSkullGeometry()
 {
 	std::ifstream fin("Models/skull.txt");
 
@@ -853,10 +854,10 @@ void Game::BuildSkullGeometry()
 	mGeometries[geo->Name] = std::move(geo);
 }
 
-// --------------------------------------------------------
+// ------------------------------------------------------------------
 // Draw stored render items. Invoked in the main Draw call.
-// --------------------------------------------------------
-void Game::DrawRenderItems(ID3D12GraphicsCommandList* cmdList, const std::vector<RenderItem*>& ritems)
+// ------------------------------------------------------------------
+void ShapesApp::DrawRenderItems(ID3D12GraphicsCommandList* cmdList, const std::vector<RenderItem*>& ritems)
 {
 	UINT objCBByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(ObjectConstants));
 
@@ -871,8 +872,8 @@ void Game::DrawRenderItems(ID3D12GraphicsCommandList* cmdList, const std::vector
 		cmdList->IASetIndexBuffer(&ri->Geo->IndexBufferView());
 		cmdList->IASetPrimitiveTopology(ri->PrimitiveType);
 
-		// Offset to the CBV in the descriptor heap for this object and
-		// for this frame resource.
+		// Offset to the CBV in the descriptor heap for this object and for 
+		// this frame resource.
 		UINT cbvIndex = mCurrFrameResourceIndex * (UINT)mOpaqueRitems.size() + ri->ObjCBIndex;
 		auto cbvHandle = CD3DX12_GPU_DESCRIPTOR_HANDLE(
 			mCbvHeap->GetGPUDescriptorHandleForHeapStart());
@@ -887,12 +888,12 @@ void Game::DrawRenderItems(ID3D12GraphicsCommandList* cmdList, const std::vector
 
 #pragma region Mouse Input
 
-// --------------------------------------------------------
-// Helper method for mouse clicking.  We get this information
-// from the OS-level messages anyway, so these helpers have
-// been created to provide basic mouse input if you want it.
-// --------------------------------------------------------
-void Game::OnMouseDown(WPARAM btnState, int x, int y)
+// ------------------------------------------------------------------
+// Helper method for mouse clicking.  We get this information from the 
+// OS-level messages anyway, so these helpers have been created to 
+// provide basic mouse input if you want it.
+// ------------------------------------------------------------------
+void ShapesApp::OnMouseDown(WPARAM btnState, int x, int y)
 {
 	// Add any custom code here...
 
@@ -900,30 +901,30 @@ void Game::OnMouseDown(WPARAM btnState, int x, int y)
 	mLastMousePos.x = x;
 	mLastMousePos.y = y;
 
-	// Caputure the mouse so we keep getting mouse move
-	// events even if the mouse leaves the window. We'll be
-	// releasing the capture once a mouse button is released
+	// Caputure the mouse so we keep getting mouse move events even if the 
+	// mouse leaves the window. We'll be releasing the capture once a mouse 
+	// button is released
 	SetCapture(mhMainWnd);
 }
 
-// --------------------------------------------------------
+// ------------------------------------------------------------------
 // Helper method for mouse release
-// --------------------------------------------------------
-void Game::OnMouseUp(WPARAM btnState, int x, int y)
+// ------------------------------------------------------------------
+void ShapesApp::OnMouseUp(WPARAM btnState, int x, int y)
 {
 	// Add any custom code here...
 
-	// We don't care about the tracking the cursor outside
-	// the window anymore (we're not dragging if the mouse is up)
+	// We don't care about the tracking the cursor outside the window anymore 
+	// (we're not dragging if the mouse is up)
 	ReleaseCapture();
 }
 
-// --------------------------------------------------------
-// Helper method for mouse movement.  We only get this message
-// if the mouse is currently over the window, or if we're 
-// currently capturing the mouse.
-// --------------------------------------------------------
-void Game::OnMouseMove(WPARAM btnState, int x, int y)
+// ------------------------------------------------------------------
+// Helper method for mouse movement.  We only get this message if the 
+// mouse is currently over the window, or if we're currently capturing
+// the mouse.
+// ------------------------------------------------------------------
+void ShapesApp::OnMouseMove(WPARAM btnState, int x, int y)
 {
 	if ((btnState & MK_LBUTTON) != 0)
 	{
@@ -956,12 +957,12 @@ void Game::OnMouseMove(WPARAM btnState, int x, int y)
 	mLastMousePos.y = y;
 }
 
-// --------------------------------------------------------
+// ------------------------------------------------------------------
 // Helper method for mouse wheel scrolling.  
-// WheelDelta may be positive or negative, depending 
-// on the direction of the scroll
-// --------------------------------------------------------
-void Game::OnMouseWheel(float wheelDelta, int x, int y)
+// WheelDelta may be positive or negative, depending on the direction 
+// of the scroll
+// ------------------------------------------------------------------
+void ShapesApp::OnMouseWheel(float wheelDelta, int x, int y)
 {
 	// Add any custom code here...
 }

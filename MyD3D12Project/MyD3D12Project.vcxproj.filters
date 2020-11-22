@@ -19,11 +19,14 @@
     <Filter Include="Common">
       <UniqueIdentifier>{86a7290a-b6d7-4439-bb16-5f24e059b142}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Shapes Demo">
+      <UniqueIdentifier>{dde9cf66-772d-4777-85f6-4f9962435df4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Land and Waves Demo">
+      <UniqueIdentifier>{ee3c9455-ebde-45ff-a1cd-affd320aab92}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Game.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -45,14 +48,17 @@
     <ClCompile Include="Common\GeometryGenerator.cpp">
       <Filter>Common</Filter>
     </ClCompile>
+    <ClCompile Include="LandAndWavesApp.cpp">
+      <Filter>Land and Waves Demo</Filter>
+    </ClCompile>
+    <ClCompile Include="ShapesApp.cpp">
+      <Filter>Shapes Demo</Filter>
+    </ClCompile>
+    <ClCompile Include="Waves.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Game.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Vertex.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="FrameResource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -73,6 +79,15 @@
     </ClInclude>
     <ClInclude Include="Common\GeometryGenerator.h">
       <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="LandAndWavesApp.h">
+      <Filter>Land and Waves Demo</Filter>
+    </ClInclude>
+    <ClInclude Include="ShapesApp.h">
+      <Filter>Shapes Demo</Filter>
+    </ClInclude>
+    <ClInclude Include="Waves.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

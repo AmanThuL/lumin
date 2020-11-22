@@ -1,17 +1,17 @@
-/**
-	The core Direct3D application class code that is
-	used to encapsulate a Direct3D sample application.
-
-	@file d3dApp.h
-	@author Frank Luna
-	@contributor Rudy Zhang
-	@copyright 2020 All Rights Reserved.
-*/
+//*******************************************************************
+// Copyright Frank Luna (C) 2015 All Rights Reserved.
+//
+// d3dApp.h:
+//
+// The core Direct3D application class code that is used to encapsulate 
+// a Direct3D sample application.
+//*******************************************************************
 
 #pragma once
 
-// When the _CRTDBG_MAP_ALLOC flag is defined in the debug version of an application, 
-// the base version of the heap functions are directly mapped to their debug versions.
+// When the _CRTDBG_MAP_ALLOC flag is defined in the debug version of an 
+// application, the base version of the heap functions are directly mapped to 
+// their debug versions.
 #if defined(DEBUG) || defined(_DEBUG)
 #define _CRTDBG_MAP_ALLOC
 #include <crtdbg.h>
