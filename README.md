@@ -18,3 +18,6 @@ More general information about this book can be found [here](http://www.d3dcoder
 - The function allocates a console window to help print debugging information.
 
 5. **Combined Shapes demo and LandAndWaves demo into one solution**
+
+6. **Added RenderItem.h**:
+- Refactored `struct RenderItem` out from the ShapesApp class to allow universal usage by other classes.
