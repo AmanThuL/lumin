@@ -26,7 +26,9 @@
     <ClCompile Include="Common\MathHelper.cpp" />
     <ClCompile Include="FrameResource.cpp" />
     <ClCompile Include="LandAndWavesApp.cpp" />
-    <ClCompile Include="ShapesApp.cpp" />
+    <ClCompile Include="ShapesApp.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Waves.cpp" />
   </ItemGroup>
@@ -39,7 +41,10 @@
     <ClInclude Include="Common\UploadBuffer.h" />
     <ClInclude Include="FrameResource.h" />
     <ClInclude Include="LandAndWavesApp.h" />
-    <ClInclude Include="ShapesApp.h" />
+    <ClInclude Include="RenderItem.h" />
+    <ClInclude Include="ShapesApp.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="Waves.h" />
   </ItemGroup>
   <ItemGroup>

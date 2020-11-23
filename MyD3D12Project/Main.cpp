@@ -8,10 +8,11 @@
 
 #include <Windows.h>
 #include "ShapesApp.h"
+#include "LandAndWavesApp.h"
 
-// --------------------------------------------------------
+// ------------------------------------------------------------------
 // Entry point for a graphical (non-console) Windows application
-// --------------------------------------------------------
+// ------------------------------------------------------------------
 int WINAPI WinMain(
 	_In_ HINSTANCE hInstance, 
 	_In_opt_ HINSTANCE prevInstance,
@@ -27,12 +28,15 @@ int WINAPI WinMain(
 
 	try
 	{
-		// Create the Game object using
-		// the app handle we got from WinMain
-		ShapesApp theApp(hInstance);
+		// Create the App object using the app handle we got from WinMain
+		LandAndWavesApp theApp(hInstance);
+
+		// Attempt to initialize DirectX, and exit early if something failed
 		if (!theApp.Initialize())
 			return 0;
 
+		// Begin the message and game loop, and then return whatever we get 
+		// back once the game loop is over
 		return theApp.Run();
 	}
 	catch (DxException& e)

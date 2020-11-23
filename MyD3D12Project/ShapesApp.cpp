@@ -14,8 +14,7 @@ using namespace std;
 const int gNumFrameResources = 3;
 
 ShapesApp::ShapesApp(HINSTANCE hInstance)
-	: D3DApp(
-		hInstance)	 // The application's handle
+	: D3DApp(hInstance)	 // The application's handle
 {
 #if defined(DEBUG) || defined(_DEBUG)
 	// Do we want a console window?  Probably only in debug mode
@@ -78,8 +77,7 @@ void ShapesApp::OnResize()
 
 	// The window resized, so update the aspect ratio and recompute the
 	// projection matrix.
-	XMMATRIX P = XMMatrixPerspectiveFovLH(0.25f * MathHelper::Pi,
-		AspectRatio(), 1.0f, 1000.0f);
+	XMMATRIX P = XMMatrixPerspectiveFovLH(0.25f * MathHelper::Pi, AspectRatio(), 1.0f, 1000.0f);
 	XMStoreFloat4x4(&mProj, P);
 }
 
@@ -121,14 +119,12 @@ void ShapesApp::Draw(const GameTimer& gt)
 {
 	auto cmdListAlloc = mCurrFrameResource->CmdListAlloc;
 
-	// Reuse the memory associated with command recording.
-	// We can only reset when the associated command lists have finished 
-	// execution on the GPU.
+	// Reuse the memory associated with command recording. We can only reset 
+	// when the associated command lists have finished execution on the GPU.
 	ThrowIfFailed(cmdListAlloc->Reset());
 
-	// A command list can be reset after it has been added to the 
-	// command queue via ExecuteCommandList. 
-	// Reusing the command list reuses memory.
+	// A command list can be reset after it has been added to the command queue
+	// via ExecuteCommandList. Reusing the command list reuses memory.
 	if (mIsWireframe)
 	{
 		ThrowIfFailed(mCommandList->Reset(cmdListAlloc.Get(), mPSOs["opaque_wireframe"].Get()));
@@ -144,8 +140,7 @@ void ShapesApp::Draw(const GameTimer& gt)
 	mCommandList->RSSetScissorRects(1, &mScissorRect);
 
 	// Indicate a state transition on the resource usage.
-	mCommandList->ResourceBarrier(1, 
-		&CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
+	mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
 		D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
 
 	// Clear the back buffer and depth buffer.
@@ -292,6 +287,8 @@ void ShapesApp::UpdateMainPassCB(const GameTimer& gt)
 
 #pragma endregion
 
+
+#pragma region Build Methods
 
 // ------------------------------------------------------------------
 // Create a new descriptor heap to store a mixture of constant buffer, 
@@ -675,7 +672,8 @@ void ShapesApp::BuildFrameResources()
 	// always has work to do.
 	for (int i = 0; i < gNumFrameResources; ++i)
 	{
-		mFrameResources.push_back(std::make_unique<FrameResource>(md3dDevice.Get(), 1, (UINT)mAllRitems.size()));
+		mFrameResources.push_back(std::make_unique<FrameResource>(md3dDevice.Get(), 
+			1, (UINT)mAllRitems.size()));
 	}
 }
 
@@ -853,6 +851,9 @@ void ShapesApp::BuildSkullGeometry()
 
 	mGeometries[geo->Name] = std::move(geo);
 }
+
+#pragma endregion
+
 
 // ------------------------------------------------------------------
 // Draw stored render items. Invoked in the main Draw call.
