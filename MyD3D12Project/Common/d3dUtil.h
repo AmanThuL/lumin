@@ -148,10 +148,11 @@ public:
     int LineNumber = -1;
 };
 
-// Defines a subrange of geometry in a MeshGeometry.  This is for when multiple
-// geometries are stored in one vertex and index buffer.  It provides the offsets
-// and data needed to draw a subset of geometry stores in the vertex and index 
-// buffers so that we can implement the technique described by Figure 6.3.
+// Defines a subrange of geometry in a MeshGeometry. This is for when multiple
+// geometries are stored in one vertex and index buffer. It provides the 
+// offsets and data needed to draw a subset of geometry stores in the vertex 
+// and index buffers so that we can implement the technique described by 
+// Figure 6.3.
 struct SubmeshGeometry
 {
     UINT IndexCount = 0;
@@ -168,7 +169,8 @@ struct MeshGeometry
     // Give it a name so we can look it up by name.
     std::string Name;
 
-    // System memory copies.  Use Blobs because the vertex/index format can be generic.
+    // System memory copies. Use Blobs because the vertex/index format can be 
+    // generic.
     // It is up to the client to cast appropriately.  
     Microsoft::WRL::ComPtr<ID3DBlob> VertexBufferCPU = nullptr;
     Microsoft::WRL::ComPtr<ID3DBlob> IndexBufferCPU = nullptr;
@@ -220,16 +222,18 @@ struct MeshGeometry
 
 struct Light
 {
-    DirectX::XMFLOAT3 Strength = { 0.5f, 0.5f, 0.5f };
-    float FalloffStart = 1.0f;                          // point/spot light only
-    DirectX::XMFLOAT3 Direction = { 0.0f, -1.0f, 0.0f };// directional/spot light only
-    float FalloffEnd = 10.0f;                           // point/spot light only
+    DirectX::XMFLOAT3 Strength = { 0.5f, 0.5f, 0.5f };  // Light color
+    float FalloffStart = 1.0f;  // point/spot light only
+    DirectX::XMFLOAT3 Direction = { 0.0f, -1.0f, 0.0f };  // directional/spot light only
+    float FalloffEnd = 10.0f;  // point/spot light only
     DirectX::XMFLOAT3 Position = { 0.0f, 0.0f, 0.0f };  // point/spot light only
-    float SpotPower = 64.0f;                            // spot light only
+    float SpotPower = 64.0f;  // spot light only
 };
 
 #define MaxLights 16
 
+// Contains a subset of the Material data; specifically it contains just the
+// data the shaders need for rendering
 struct MaterialConstants
 {
     DirectX::XMFLOAT4 DiffuseAlbedo = { 1.0f, 1.0f, 1.0f, 1.0f };
@@ -240,7 +244,7 @@ struct MaterialConstants
     DirectX::XMFLOAT4X4 MatTransform = MathHelper::Identity4x4();
 };
 
-// Simple struct to represent a material for our demos.  A production 3D engine
+// Simple struct to represent a material for our demos. A production 3D engine
 // would likely create a class hierarchy of Materials.
 struct Material
 {
@@ -256,16 +260,18 @@ struct Material
     // Index into SRV heap for normal texture.
     int NormalSrvHeapIndex = -1;
 
-    // Dirty flag indicating the material has changed and we need to update the constant buffer.
-    // Because we have a material constant buffer for each FrameResource, we have to apply the
-    // update to each FrameResource.  Thus, when we modify a material we should set 
-    // NumFramesDirty = gNumFrameResources so that each frame resource gets the update.
+    // Dirty flag indicating the material has changed and we need to update the
+    // constant buffer. Because we have a material constant buffer for each 
+    // FrameResource, we have to apply the update to each FrameResource. Thus, 
+    // when we modify a material we should set 
+    // NumFramesDirty = gNumFrameResources so that each frame resource gets the
+    // update.
     int NumFramesDirty = gNumFrameResources;
 
     // Material constant buffer data used for shading.
     DirectX::XMFLOAT4 DiffuseAlbedo = { 1.0f, 1.0f, 1.0f, 1.0f };
     DirectX::XMFLOAT3 FresnelR0 = { 0.01f, 0.01f, 0.01f };
-    float Roughness = .25f;
+    float Roughness = .25f;  // 0 = Perfectly smooth, 1 = Roughest surface
     DirectX::XMFLOAT4X4 MatTransform = MathHelper::Identity4x4();
 };
 

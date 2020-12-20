@@ -24,6 +24,8 @@ struct RenderItem
 	// and scale of the object in the world.
 	DirectX::XMFLOAT4X4 World = MathHelper::Identity4x4();
 
+	DirectX::XMFLOAT4X4 TexTransform = MathHelper::Identity4x4();
+
 	// Dirty flag indicating the object data has changed and we need 
 	// to update the constant buffer. Because we have an object 
 	// cbuffer for each FrameResource, we have to apply the
@@ -36,6 +38,10 @@ struct RenderItem
 	// Index into GPU constant buffer corresponding to the ObjectCB 
 	// for this rendering item.
 	UINT ObjCBIndex = -1;
+
+	// Material associated with this render-item. Note that multiple 
+	// render-items can refer to the same Material object.
+	Material* Mat = nullptr;
 
 	// Geometry associated with this render-item. Note that multiple
 	// render-items can be share the same geometry.

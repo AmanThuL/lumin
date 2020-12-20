@@ -55,7 +55,7 @@
       <Filter>Shapes Demo</Filter>
     </ClCompile>
     <ClCompile Include="Waves.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Land and Waves Demo</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -86,15 +86,18 @@
     <ClInclude Include="ShapesApp.h">
       <Filter>Shapes Demo</Filter>
     </ClInclude>
-    <ClInclude Include="Waves.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="RenderItem.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Waves.h">
+      <Filter>Land and Waves Demo</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Shaders\Default.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="Shaders\LightingUtil.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
   </ItemGroup>

@@ -42,13 +42,17 @@ bool LandAndWavesApp::Initialize()
     // Reset the command list to prep for initialization commands.
     ThrowIfFailed(mCommandList->Reset(mDirectCmdListAlloc.Get(), nullptr));
 
+    // Get the increment size of a descriptor in this heap type. This is 
+    // hardware specific, so we have to query this information.
+    mCbvSrvDescriptorSize = md3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
     mWaves = std::make_unique<Waves>(128, 128, 1.0f, 0.03f, 4.0f, 0.2f);
 
     BuildRootSignature();
     BuildShadersAndInputLayout();
     BuildLandGeometry();
     BuildWavesGeometryBuffers();
-    BuildRenderItems();
+    BuildMaterials();
     BuildRenderItems();
     BuildFrameResources();
     BuildPSOs();
@@ -105,6 +109,7 @@ void LandAndWavesApp::Update(const GameTimer& gt)
     }
 
     UpdateObjectCBs(gt);
+    UpdateMaterialCBs(gt);
     UpdateMainPassCB(gt);
     UpdateWaves(gt);
 }
@@ -153,7 +158,7 @@ void LandAndWavesApp::Draw(const GameTimer& gt)
 
     // Bind per-pass constant buffer.  We only need to do this once per-pass.
     auto passCB = mCurrFrameResource->PassCB->Resource();
-    mCommandList->SetGraphicsRootConstantBufferView(1, passCB->GetGPUVirtualAddress());
+    mCommandList->SetGraphicsRootConstantBufferView(2, passCB->GetGPUVirtualAddress());
 
     DrawRenderItems(mCommandList.Get(), mRitemLayer[(int)RenderLayer::Opaque]);
 
@@ -193,10 +198,28 @@ void LandAndWavesApp::Draw(const GameTimer& gt)
 // ------------------------------------------------------------------
 void LandAndWavesApp::OnKeyboardInput(const GameTimer& gt)
 {
+    // Toggle wireframe mode
     if (GetAsyncKeyState('1') & 0x8000)
         mIsWireframe = true;
     else
         mIsWireframe = false;
+
+    // Allow the user to rotate the sun position using arrow keys
+    const float dt = gt.DeltaTime();
+
+    if (GetAsyncKeyState(VK_LEFT) & 0x8000)
+        mSunTheta -= 1.0f * dt;
+
+    if (GetAsyncKeyState(VK_RIGHT) & 0x8000)
+        mSunTheta += 1.0f * dt;
+
+    if (GetAsyncKeyState(VK_UP) & 0x8000)
+        mSunPhi -= 1.0f * dt;
+
+    if (GetAsyncKeyState(VK_DOWN) & 0x8000)
+        mSunPhi += 1.0f * dt;
+
+    mSunPhi = MathHelper::Clamp(mSunPhi, 0.1f, XM_PIDIV2);
 }
 
 // ------------------------------------------------------------------
@@ -232,6 +255,7 @@ void LandAndWavesApp::UpdateObjectCBs(const GameTimer& gt)
         if (e->NumFramesDirty > 0)
         {
             XMMATRIX world = XMLoadFloat4x4(&e->World);
+            XMMATRIX texTransform = XMLoadFloat4x4(&e->TexTransform);
 
             ObjectConstants objConstants;
             XMStoreFloat4x4(&objConstants.World, XMMatrixTranspose(world));
@@ -244,6 +268,35 @@ void LandAndWavesApp::UpdateObjectCBs(const GameTimer& gt)
     }
 }
 
+// ------------------------------------------------------------------
+// The material data is copied to a subregion of the constant buffer
+// whenever it is changed ("dirty) so that the GPU material constant
+// buffer data is kept up to date with the system memory material data.
+// ------------------------------------------------------------------
+void LandAndWavesApp::UpdateMaterialCBs(const GameTimer& gt)
+{
+    auto currMaterialCB = mCurrFrameResource->MaterialCB.get();
+    for (auto& e : mMaterials)
+    {
+        // Only update the cbuffer data if the constants have changed. If the 
+        // cbuffer data changes, it needs to be updated for each FrameResource.
+        Material* mat = e.second.get();
+        if (mat->NumFramesDirty > 0)
+        {
+            XMMATRIX matTransform = XMLoadFloat4x4(&mat->MatTransform);
+
+            MaterialConstants matConstants;
+            matConstants.DiffuseAlbedo = mat->DiffuseAlbedo;
+            matConstants.FresnelR0 = mat->FresnelR0;
+            matConstants.Roughness = mat->Roughness;
+
+            currMaterialCB->CopyData(mat->MatCBIndex, matConstants);
+
+            // Next FrameResource need to be updated too.
+            mat->NumFramesDirty--;
+        }
+    }
+}
 
 // ------------------------------------------------------------------
 // Update the per pass constant buffer only once per rendering pass.
@@ -271,6 +324,12 @@ void LandAndWavesApp::UpdateMainPassCB(const GameTimer& gt)
     mMainPassCB.FarZ = 1000.0f;
     mMainPassCB.TotalTime = gt.TotalTime();
     mMainPassCB.DeltaTime = gt.DeltaTime();
+    mMainPassCB.AmbientLight = { 0.25f, 0.25f, 0.35f, 1.0f };
+
+    XMVECTOR lightDir = -MathHelper::SphericalToCartesian(1.0f, mSunTheta, mSunPhi);
+
+    XMStoreFloat3(&mMainPassCB.Lights[0].Direction, lightDir);
+    mMainPassCB.Lights[0].Strength = { 1.0f, 1.0f, 0.9f };
 
     auto currPassCB = mCurrFrameResource->PassCB.get();
     currPassCB->CopyData(0, mMainPassCB);
@@ -305,7 +364,7 @@ void LandAndWavesApp::UpdateWaves(const GameTimer& gt)
         Vertex v;
 
         v.Pos = mWaves->Position(i);
-        v.Color = XMFLOAT4(DirectX::Colors::Blue);
+        v.Normal = mWaves->Normal(i);
 
         currWavesVB->CopyData(i, v);
     }
@@ -340,16 +399,17 @@ void LandAndWavesApp::BuildRootSignature()
     //		+ Root constant
 
     // Root parameter can be a table, root descriptor or root constants.
-    CD3DX12_ROOT_PARAMETER slotRootParameter[2];
+    CD3DX12_ROOT_PARAMETER slotRootParameter[3];
 
     // Create root CBV.
     slotRootParameter[0].InitAsConstantBufferView(0);
     slotRootParameter[1].InitAsConstantBufferView(1);
+    slotRootParameter[2].InitAsConstantBufferView(2);
 
     // A root signature is an array of root parameters.
-    CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(2, slotRootParameter, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+    CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(3, slotRootParameter, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
-    // create a root signature with a single slot which points to a descriptor
+    // Create a root signature with a single slot which points to a descriptor
     // range consisting of a single constant buffer
     ComPtr<ID3DBlob> serializedRootSig = nullptr;
     ComPtr<ID3DBlob> errorBlob = nullptr;
@@ -376,13 +436,13 @@ void LandAndWavesApp::BuildRootSignature()
 // ------------------------------------------------------------------
 void LandAndWavesApp::BuildShadersAndInputLayout()
 {
-    mShaders["standardVS"] = d3dUtil::CompileShader(L"Shaders\\Default.hlsl", nullptr, "VS", "vs_5_1");
-    mShaders["opaquePS"] = d3dUtil::CompileShader(L"Shaders\\Default.hlsl", nullptr, "PS", "ps_5_1");
+    mShaders["standardVS"] = d3dUtil::CompileShader(L"Shaders\\Default.hlsl", nullptr, "VS", "vs_5_0");
+    mShaders["opaquePS"] = d3dUtil::CompileShader(L"Shaders\\Default.hlsl", nullptr, "PS", "ps_5_0");
 
     mInputLayout =
     {
         { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-        { "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+        { "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
     };
 }
 
@@ -397,10 +457,9 @@ void LandAndWavesApp::BuildLandGeometry()
     GeometryGenerator::MeshData grid = geoGen.CreateGrid(160.0f, 160.0f, 50, 50);
 
     //
-    // Extract the vertex elements we are interested and apply the height 
-    // function to each vertex. In addition, color the vertices based on their
-    // height so we have sandy looking beaches, grassy low hills, and snow 
-    // mountain peaks.
+    // Extract the vertex elements we are interested and apply the height function to
+    // each vertex.  In addition, color the vertices based on their height so we have
+    // sandy looking beaches, grassy low hills, and snow mountain peaks.
     //
 
     std::vector<Vertex> vertices(grid.Vertices.size());
@@ -409,33 +468,7 @@ void LandAndWavesApp::BuildLandGeometry()
         auto& p = grid.Vertices[i].Position;
         vertices[i].Pos = p;
         vertices[i].Pos.y = GetHillsHeight(p.x, p.z);
-
-        // Color the vertex based on its height.
-        if (vertices[i].Pos.y < -10.0f)
-        {
-            // Sandy beach color.
-            vertices[i].Color = XMFLOAT4(1.0f, 0.96f, 0.62f, 1.0f);
-        }
-        else if (vertices[i].Pos.y < 5.0f)
-        {
-            // Light yellow-green.
-            vertices[i].Color = XMFLOAT4(0.48f, 0.77f, 0.46f, 1.0f);
-        }
-        else if (vertices[i].Pos.y < 12.0f)
-        {
-            // Dark yellow-green.
-            vertices[i].Color = XMFLOAT4(0.1f, 0.48f, 0.19f, 1.0f);
-        }
-        else if (vertices[i].Pos.y < 20.0f)
-        {
-            // Dark brown.
-            vertices[i].Color = XMFLOAT4(0.45f, 0.39f, 0.34f, 1.0f);
-        }
-        else
-        {
-            // White snow.
-            vertices[i].Color = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
-        }
+        vertices[i].Normal = GetHillsNormal(p.x, p.z);
     }
 
     const UINT vbByteSize = (UINT)vertices.size() * sizeof(Vertex);
@@ -479,8 +512,7 @@ void LandAndWavesApp::BuildLandGeometry()
 // ------------------------------------------------------------------
 void LandAndWavesApp::BuildWavesGeometryBuffers()
 {
-    // 3 indices per face
-    std::vector<std::uint16_t> indices(3 * mWaves->TriangleCount());
+    std::vector<std::uint16_t> indices(3 * mWaves->TriangleCount()); // 3 indices per face
     assert(mWaves->VertexCount() < 0x0000ffff);
 
     // Iterate over each quad.
@@ -599,8 +631,33 @@ void LandAndWavesApp::BuildFrameResources()
     for (int i = 0; i < gNumFrameResources; ++i)
     {
         mFrameResources.push_back(std::make_unique<FrameResource>(md3dDevice.Get(),
-            1, (UINT)mAllRitems.size(), mWaves->VertexCount()));
+            1, (UINT)mAllRitems.size(), (UINT)mMaterials.size(), mWaves->VertexCount()));
     }
+}
+
+// ------------------------------------------------------------------
+// Define the properties of each unique material and put them in a table.
+// ------------------------------------------------------------------
+void LandAndWavesApp::BuildMaterials()
+{
+    auto grass = std::make_unique<Material>();
+    grass->Name = "grass";
+    grass->MatCBIndex = 0;
+    grass->DiffuseAlbedo = XMFLOAT4(0.2f, 0.6f, 0.2f, 1.0f);
+    grass->FresnelR0 = XMFLOAT3(0.01f, 0.01f, 0.01f);
+    grass->Roughness = 0.125f;
+
+    // This is not a good water material definition, but we do not have all the rendering
+    // tools we need (transparency, environment reflection), so we fake it for now.
+    auto water = std::make_unique<Material>();
+    water->Name = "water";
+    water->MatCBIndex = 1;
+    water->DiffuseAlbedo = XMFLOAT4(0.0f, 0.2f, 0.6f, 1.0f);
+    water->FresnelR0 = XMFLOAT3(0.1f, 0.1f, 0.1f);
+    water->Roughness = 0.0f;
+
+    mMaterials["grass"] = std::move(grass);
+    mMaterials["water"] = std::move(water);
 }
 
 // ------------------------------------------------------------------
@@ -613,6 +670,7 @@ void LandAndWavesApp::BuildRenderItems()
     auto wavesRitem = std::make_unique<RenderItem>();
     wavesRitem->World = MathHelper::Identity4x4();
     wavesRitem->ObjCBIndex = 0;
+    wavesRitem->Mat = mMaterials["water"].get();
     wavesRitem->Geo = mGeometries["waterGeo"].get();
     wavesRitem->PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
     wavesRitem->IndexCount = wavesRitem->Geo->DrawArgs["grid"].IndexCount;
@@ -626,6 +684,7 @@ void LandAndWavesApp::BuildRenderItems()
     auto gridRitem = std::make_unique<RenderItem>();
     gridRitem->World = MathHelper::Identity4x4();
     gridRitem->ObjCBIndex = 1;
+    gridRitem->Mat = mMaterials["grass"].get();
     gridRitem->Geo = mGeometries["landGeo"].get();
     gridRitem->PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
     gridRitem->IndexCount = gridRitem->Geo->DrawArgs["grid"].IndexCount;
@@ -647,8 +706,10 @@ void LandAndWavesApp::BuildRenderItems()
 void LandAndWavesApp::DrawRenderItems(ID3D12GraphicsCommandList* cmdList, const std::vector<RenderItem*>& ritems)
 {
     UINT objCBByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(ObjectConstants));
+    UINT matCBByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(MaterialConstants));
 
     auto objectCB = mCurrFrameResource->ObjectCB->Resource();
+    auto matCB = mCurrFrameResource->MaterialCB->Resource();
 
     // For each render item...
     for (size_t i = 0; i < ritems.size(); ++i)
@@ -659,10 +720,11 @@ void LandAndWavesApp::DrawRenderItems(ID3D12GraphicsCommandList* cmdList, const 
         cmdList->IASetIndexBuffer(&ri->Geo->IndexBufferView());
         cmdList->IASetPrimitiveTopology(ri->PrimitiveType);
 
-        D3D12_GPU_VIRTUAL_ADDRESS objCBAddress = objectCB->GetGPUVirtualAddress();
-        objCBAddress += ri->ObjCBIndex * objCBByteSize;
+        D3D12_GPU_VIRTUAL_ADDRESS objCBAddress = objectCB->GetGPUVirtualAddress() + ri->ObjCBIndex * objCBByteSize;
+        D3D12_GPU_VIRTUAL_ADDRESS matCBAddress = matCB->GetGPUVirtualAddress() + ri->Mat->MatCBIndex * matCBByteSize;
 
         cmdList->SetGraphicsRootConstantBufferView(0, objCBAddress);
+        cmdList->SetGraphicsRootConstantBufferView(1, matCBAddress);
 
         cmdList->DrawIndexedInstanced(ri->IndexCount, 1, ri->StartIndexLocation, ri->BaseVertexLocation, 0);
     }

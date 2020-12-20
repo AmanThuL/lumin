@@ -10,6 +10,8 @@ using Microsoft::WRL::ComPtr;
 using namespace std;
 using namespace DirectX;
 
+const int gNumFrameResources = 3;
+
 // Define the static instance variable so our OS-level 
 // message handling function below can talk to our object
 D3DApp* D3DApp::mAppInstance = nullptr;

@@ -53,6 +53,7 @@ private:
 	void OnKeyboardInput(const GameTimer& gt);
 	void UpdateCamera(const GameTimer& gt);
 	void UpdateObjectCBs(const GameTimer& gt);
+	void UpdateMaterialCBs(const GameTimer& gt);
 	void UpdateMainPassCB(const GameTimer& gt);
 	void UpdateWaves(const GameTimer& gt);
 
@@ -62,8 +63,8 @@ private:
 	void BuildWavesGeometryBuffers();
 	void BuildPSOs();
 	void BuildFrameResources();
+	void BuildMaterials();
 	void BuildRenderItems();
-
 	void DrawRenderItems(ID3D12GraphicsCommandList* cmdList, const std::vector<RenderItem*>& ritems);
 
 	float GetHillsHeight(float x, float z)const;
@@ -82,6 +83,8 @@ private:
 	// Use unordered maps for constant time lookup and reference our objects by 
 	// name.
 	std::unordered_map<std::string, std::unique_ptr<MeshGeometry>> mGeometries;
+	std::unordered_map<std::string, std::unique_ptr<Material>> mMaterials;
+	std::unordered_map<std::string, std::unique_ptr<Texture>> mTextures;
 	std::unordered_map<std::string, Microsoft::WRL::ComPtr<ID3DBlob>> mShaders;
 	std::unordered_map<std::string, Microsoft::WRL::ComPtr<ID3D12PipelineState>> mPSOs;
 
@@ -115,6 +118,5 @@ private:
 	// Keeps track of the old mouse position. Useful for determining how far 
 	// the mouse moved in a single frame.
 	POINT mLastMousePos;
-
 };
 
