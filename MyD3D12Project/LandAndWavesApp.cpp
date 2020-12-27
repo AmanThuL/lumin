@@ -289,6 +289,7 @@ void LandAndWavesApp::UpdateMaterialCBs(const GameTimer& gt)
             matConstants.DiffuseAlbedo = mat->DiffuseAlbedo;
             matConstants.FresnelR0 = mat->FresnelR0;
             matConstants.Roughness = mat->Roughness;
+            XMStoreFloat4x4(&matConstants.MatTransform, XMMatrixTranspose(matTransform));
 
             currMaterialCB->CopyData(mat->MatCBIndex, matConstants);
 
@@ -611,7 +612,6 @@ void LandAndWavesApp::BuildPSOs()
     //
     // PSO for opaque wireframe objects.
     //
-
     D3D12_GRAPHICS_PIPELINE_STATE_DESC opaqueWireframePsoDesc = opaquePsoDesc;
     opaqueWireframePsoDesc.RasterizerState.FillMode = D3D12_FILL_MODE_WIREFRAME;
     ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&opaqueWireframePsoDesc, IID_PPV_ARGS(&mPSOs["opaque_wireframe"])));

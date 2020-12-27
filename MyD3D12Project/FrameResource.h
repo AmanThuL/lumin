@@ -59,8 +59,7 @@ public:
 	
     // Constructors
     FrameResource(ID3D12Device* device, UINT passCount, UINT objectCount);
-    FrameResource(ID3D12Device* device, UINT passCount, UINT objectCount, UINT waveVertCount);
-    FrameResource(ID3D12Device* device, UINT passCount, UINT objectCount, UINT materialCount, UINT waveVertCount);
+    FrameResource(ID3D12Device* device, UINT passCount, UINT objectCount, UINT materialCount, UINT waveVertCount = 0);
 
     FrameResource(const FrameResource& rhs) = delete;
 	FrameResource& operator=(const FrameResource& rhs) = delete;

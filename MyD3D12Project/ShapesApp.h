@@ -44,21 +44,19 @@ private:
 
 	void OnKeyboardInput(const GameTimer& gt);
 	void UpdateCamera(const GameTimer& gt);
+	void AnimateMaterials(const GameTimer& gt);
 	void UpdateObjectCBs(const GameTimer& gt);
+	void UpdateMaterialCBs(const GameTimer& gt);
 	void UpdateMainPassCB(const GameTimer& gt);
 
-	void BuildDescriptorHeaps();
-	void BuildConstantBufferViews();
 	void BuildRootSignature();
 	void BuildShadersAndInputLayout();
 	void BuildShapeGeometry();
+	void BuildSkullGeometry();
 	void BuildPSOs();
 	void BuildFrameResources();
+	void BuildMaterials();
 	void BuildRenderItems();
-
-	// Custom build methods
-	void BuildSkullGeometry();
-
 	void DrawRenderItems(ID3D12GraphicsCommandList* cmdList, const std::vector<RenderItem*>& ritems);
 
 private:
@@ -67,14 +65,17 @@ private:
 	FrameResource* mCurrFrameResource = nullptr;
 	int mCurrFrameResourceIndex = 0;
 
+	UINT mCbvSrvDescriptorSize = 0;
+
 	Microsoft::WRL::ComPtr<ID3D12RootSignature> mRootSignature = nullptr;
-	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> mCbvHeap = nullptr;
 
 	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> mSrvDescriptorHeap = nullptr;
 
 	// Use unordered maps for constant time lookup and reference our objects by 
 	// name.
 	std::unordered_map<std::string, std::unique_ptr<MeshGeometry>> mGeometries;
+	std::unordered_map<std::string, std::unique_ptr<Material>> mMaterials;
+	std::unordered_map<std::string, std::unique_ptr<Texture>> mTextures;
 	std::unordered_map<std::string, Microsoft::WRL::ComPtr<ID3DBlob>> mShaders;
 	std::unordered_map<std::string, Microsoft::WRL::ComPtr<ID3D12PipelineState>> mPSOs;
 
@@ -88,8 +89,6 @@ private:
 	//std::vector<RenderItem*> mTransparentRitems;
 
 	PassConstants mMainPassCB;
-
-	UINT mPassCbvOffset = 0;
 
 	bool mIsWireframe = false;
 

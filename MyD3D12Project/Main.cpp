@@ -30,7 +30,7 @@ int WINAPI WinMain(
 	try
 	{
 		// Create the App object using the app handle we got from WinMain
-		LandAndWavesApp theApp(hInstance);
+		ShapesApp theApp(hInstance);
 
 		// Attempt to initialize DirectX, and exit early if something failed
 		if (!theApp.Initialize())
