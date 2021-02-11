@@ -141,7 +141,7 @@ protected:
 	UINT mCbvSrvUavDescriptorSize = 0;
 
 	// Derived class should set these in derived constructor to customize starting values.
-	std::wstring	mMainWndCaption = L"DirectX App";
+	std::wstring	mMainWndCaption = L"DirectX Rendering Engine";
 	bool			titleBarStats = true;	// Show extra stats in title bar?
 	D3D_DRIVER_TYPE md3dDriverType = D3D_DRIVER_TYPE_HARDWARE;
 	DXGI_FORMAT		mBackBufferFormat = DXGI_FORMAT_R8G8B8A8_UNORM;

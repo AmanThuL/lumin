@@ -21,10 +21,10 @@ struct Light
 {
     float3 Strength;
     float FalloffStart; // point/spot light only
-    float3 Direction;   // directional/spot light only
-    float FalloffEnd;   // point/spot light only
-    float3 Position;    // point light only
-    float SpotPower;    // spot light only
+    float3 Direction; // directional/spot light only
+    float FalloffEnd; // point/spot light only
+    float3 Position; // point light only
+    float SpotPower; // spot light only
 };
 
 // Struct with material data
@@ -179,7 +179,7 @@ float3 ComputeSpotLight(Light L, Material mat, float3 pos, float3 normal, float3
 // that directional lights must come first in the light array, point
 // lights come second, and spot lights come last.
 // ------------------------------------------------------------------
-float4 ComputeLighting(Light gLights[MaxLights], Material mat, 
+float4 ComputeLighting(Light gLights[MaxLights], Material mat,
                        float3 pos, float3 normal, float3 toEye,
                        float3 shadowFactor)
 {
@@ -191,25 +191,25 @@ float4 ComputeLighting(Light gLights[MaxLights], Material mat,
     // is for the shader to only do the lighting equation for the number of
     // lights that are actually needed.
 #if (NUM_DIR_LIGHTS > 0)
-    for (i = 0; i < NUM_DIR_LIGHTS; ++i)
+    for(i = 0; i < NUM_DIR_LIGHTS; ++i)
     {
         result += shadowFactor[i] * ComputeDirectionalLight(gLights[i], mat, normal, toEye);
     }
 #endif
 
 #if (NUM_POINT_LIGHTS > 0)
-    for (i = NUM_DIR_LIGHTS; i < NUM_DIR_LIGHTS + NUM_POINT_LIGHTS; ++i)
+    for(i = NUM_DIR_LIGHTS; i < NUM_DIR_LIGHTS+NUM_POINT_LIGHTS; ++i)
     {
         result += ComputePointLight(gLights[i], mat, pos, normal, toEye);
     }
 #endif
 
 #if (NUM_SPOT_LIGHTS > 0)
-    for (i = NUM_DIR_LIGHTS + NUM_POINT_LIGHTS; i < NUM_DIR_LIGHTS + NUM_POINT_LIGHTS + NUM_SPOT_LIGHTS; ++i)
+    for(i = NUM_DIR_LIGHTS + NUM_POINT_LIGHTS; i < NUM_DIR_LIGHTS + NUM_POINT_LIGHTS + NUM_SPOT_LIGHTS; ++i)
     {
         result += ComputeSpotLight(gLights[i], mat, pos, normal, toEye);
     }
-#endif
-    
+#endif 
+
     return float4(result, 0.0f);
 }

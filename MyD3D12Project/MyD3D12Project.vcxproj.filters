@@ -57,6 +57,9 @@
     <ClCompile Include="Waves.cpp">
       <Filter>Land and Waves Demo</Filter>
     </ClCompile>
+    <ClCompile Include="Common\DDSTextureLoader.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FrameResource.h">
@@ -91,6 +94,9 @@
     </ClInclude>
     <ClInclude Include="Waves.h">
       <Filter>Land and Waves Demo</Filter>
+    </ClInclude>
+    <ClInclude Include="Common\DDSTextureLoader.h">
+      <Filter>Common</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

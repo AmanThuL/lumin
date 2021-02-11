@@ -8,7 +8,7 @@
 
 // Defaults for number of lights.
 #ifndef NUM_DIR_LIGHTS
-    #define NUM_DIR_LIGHTS 1
+    #define NUM_DIR_LIGHTS 3
 #endif
 
 #ifndef NUM_POINT_LIGHTS
@@ -22,6 +22,17 @@
 // Include structures and functions for lighting.
 #include "LightingUtil.hlsl"
 
+// Texture objects definition
+Texture2D    gDiffuseMap          : register(t0);
+
+// Sampler objects definition     
+SamplerState gsamPointWrap        : register(s0);
+SamplerState gsamPointClamp       : register(s1);
+SamplerState gsamLinearWrap       : register(s2);
+SamplerState gsamLinearClamp      : register(s3);
+SamplerState gsamAnisotropicWrap  : register(s4);
+SamplerState gsamAnisotropicClamp : register(s5);
+
 // Constant data that varies per frame
 
 // Per Object Constant Buffer
@@ -31,15 +42,9 @@
 cbuffer cbPerObject : register(b0)
 {
     float4x4 gWorld;
+    float4x4 gTexTransform;
 };
 
-cbuffer cbMaterial : register(b1)
-{
-    float4 gDiffuseAlbedo;
-    float3 gFresnelR0;
-    float gRoughness;
-    float4x4 gMatTransform;
-}
 
 // Constant data that varies per material.
 
@@ -48,7 +53,7 @@ cbuffer cbMaterial : register(b1)
 // - E.g. eye position, view/projection matrices, screen (render target)
 //        dimensions, game timing info, etc.
 // - Implicitly padded to 256 bytes
-cbuffer cbPass : register(b2)
+cbuffer cbPass : register(b1)
 {
     float4x4 gView;
     float4x4 gInvView;
@@ -66,12 +71,27 @@ cbuffer cbPass : register(b2)
     float gDeltaTime;
     float4 gAmbientLight;
 
+    // Allow application to change fog parameters once per frame.
+    // For example, we may only use fog for certain times of day.
+    float4 gFogColor;
+    float gFogStart;
+    float gFogRange;
+    float2 cbPerObjectPad2;
+    
     // Indices [0, NUM_DIR_LIGHTS) are directional lights;
     // indices [NUM_DIR_LIGHTS, NUM_DIR_LIGHTS+NUM_POINT_LIGHTS) are point lights;
     // indices [NUM_DIR_LIGHTS+NUM_POINT_LIGHTS, NUM_DIR_LIGHTS+NUM_POINT_LIGHT+NUM_SPOT_LIGHTS)
     // are spot lights for a maximum of MaxLights per object.
     Light gLights[MaxLights];
 };
+
+cbuffer cbMaterial : register(b2)
+{
+    float4   gDiffuseAlbedo;
+    float3   gFresnelR0;
+    float    gRoughness;
+    float4x4 gMatTransform;
+}
 
 // Struct representing a single vertex worth of data
 // - This should match the vertex definition in our C++ code
@@ -87,6 +107,7 @@ struct VertexIn
 	//  v    v                v
     float3 PosL			: POSITION;		// XYZ position
     float3 NormalL		: NORMAL;		// Normal (Local Space)
+    float2 TexC         : TEXCOORD;     // Texture coordinates (u,v)
 };
 
 // Struct representing the data we're sending down the pipeline
@@ -104,6 +125,7 @@ struct VertexOut
     float4 PosH         : SV_POSITION;  // XYZW position (System Value Position)
     float3 PosW         : POSITION;     // XYZ position (World Space)
     float3 NormalW		: NORMAL;		// Normal (World Space)
+    float2 TexC         : TEXCOORD;     // Texture coordinates (u,v)
 };
 
 // ------------------------------------------------------------------
@@ -125,6 +147,10 @@ VertexOut VS(VertexIn vin)
 
     // Transform to homogeneous clip space.
     vout.PosH = mul(posW, gViewProj);
+	
+	// Output vertex attributes for interpolation across triangle.
+    float4 texC = mul(float4(vin.TexC, 0.0f, 1.0f), gTexTransform);
+    vout.TexC = mul(texC, gMatTransform).xy;
 
     return vout;
 }
@@ -143,25 +169,44 @@ float4 PS(VertexOut pin) : SV_Target
     // are interpolated across the pixels of a triangle. The interpolated
     // values are then fed into the pixel shader as input.
     
+    // Returns the interpolated color from the texture map at the specified
+    // (u,v) point using the filtering methods specified by the SamplerState
+    // object.
+    float4 diffuseAlbedo = gDiffuseMap.Sample(gsamAnisotropicWrap, pin.TexC) * gDiffuseAlbedo;
+	
+#ifdef ALPHA_TEST
+	// Discard pixel if texture alpha < 0.1.  We do this test as soon 
+	// as possible in the shader so that we can potentially exit the
+	// shader early, thereby skipping the rest of the shader code.
+	clip(diffuseAlbedo.a - 0.1f);
+#endif
+
     // Interpolating normal can unnormalize it, so renormalize it.
     pin.NormalW = normalize(pin.NormalW);
 
     // Vector from point being lit to eye. 
-    float3 toEyeW = normalize(gEyePosW - pin.PosW);
+    float3 toEyeW = gEyePosW - pin.PosW;
+    float distToEye = length(toEyeW);
+    toEyeW /= distToEye; // normalize
 
-	// Indirect lighting.
-    float4 ambient = gAmbientLight * gDiffuseAlbedo;
+    // Light terms.
+    float4 ambient = gAmbientLight * diffuseAlbedo;
 
     const float shininess = 1.0f - gRoughness;
-    Material mat = { gDiffuseAlbedo, gFresnelR0, shininess };
+    Material mat = { diffuseAlbedo, gFresnelR0, shininess };
     float3 shadowFactor = 1.0f;
     float4 directLight = ComputeLighting(gLights, mat, pin.PosW,
         pin.NormalW, toEyeW, shadowFactor);
 
     float4 litColor = ambient + directLight;
 
-    // Common convention to take alpha from diffuse material.
-    litColor.a = gDiffuseAlbedo.a;
+#ifdef FOG
+	float fogAmount = saturate((distToEye - gFogStart) / gFogRange);
+	litColor = lerp(litColor, gFogColor, fogAmount);
+#endif
+
+    // Common convention to take alpha from diffuse albedo.
+    litColor.a = diffuseAlbedo.a;
 
     return litColor;
 }
