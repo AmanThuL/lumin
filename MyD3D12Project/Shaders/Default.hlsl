@@ -22,8 +22,28 @@
 // Include structures and functions for lighting.
 #include "LightingUtil.hlsl"
 
-// Texture objects definition
-Texture2D    gDiffuseMap          : register(t0);
+struct MaterialData
+{
+    float4 DiffuseAlbedo;
+    float3 FresnelR0;
+    float Roughness;
+    float4x4 MatTransform;
+    uint DiffuseMapIndex;
+    uint MatPad0;
+    uint MatPad1;
+    uint MatPad2;
+};
+
+
+// An array of textures, which is only supported in shader model 5.1+. Unlike
+// Texture2DArray, the textures in this array can be different sizes and
+// formats, making it more flexible than texture arrays.
+Texture2D gDiffuseMap[4] : register(t0);
+
+// Put in space1, so the texture array does not overlap with these resources.
+// The texture array will occupy registers t0, t1, ..., t3 in space0.
+StructuredBuffer<MaterialData> gMaterialData : register(t0, space1);
+
 
 // Sampler objects definition     
 SamplerState gsamPointWrap        : register(s0);
@@ -34,25 +54,17 @@ SamplerState gsamAnisotropicWrap  : register(s4);
 SamplerState gsamAnisotropicClamp : register(s5);
 
 // Constant data that varies per frame
-
-// Per Object Constant Buffer
-// - Only store constants that are associated with an object
-// - So far, the only constant data is the object's world matrix
-// - Implicitly padded to 256 bytes
 cbuffer cbPerObject : register(b0)
 {
     float4x4 gWorld;
     float4x4 gTexTransform;
+    uint gMaterialIndex;
+    uint gObjPad0;
+    uint gObjPad1;
+    uint gObjPad2;
 };
 
-
 // Constant data that varies per material.
-
-// Pass Constant Buffer
-// - Stores constant data that is fixed over a given rendering pass
-// - E.g. eye position, view/projection matrices, screen (render target)
-//        dimensions, game timing info, etc.
-// - Implicitly padded to 256 bytes
 cbuffer cbPass : register(b1)
 {
     float4x4 gView;
@@ -85,13 +97,7 @@ cbuffer cbPass : register(b1)
     Light gLights[MaxLights];
 };
 
-cbuffer cbMaterial : register(b2)
-{
-    float4   gDiffuseAlbedo;
-    float3   gFresnelR0;
-    float    gRoughness;
-    float4x4 gMatTransform;
-}
+// ============================================================================
 
 // Struct representing a single vertex worth of data
 // - This should match the vertex definition in our C++ code
@@ -137,6 +143,9 @@ struct VertexOut
 VertexOut VS(VertexIn vin)
 {
     VertexOut vout = (VertexOut) 0.0f;
+    
+    // Fetch the material data.
+    MaterialData matData = gMaterialData[gMaterialIndex];
 	
     // Transform to world space.
     float4 posW = mul(float4(vin.PosL, 1.0f), gWorld);
@@ -150,7 +159,7 @@ VertexOut VS(VertexIn vin)
 	
 	// Output vertex attributes for interpolation across triangle.
     float4 texC = mul(float4(vin.TexC, 0.0f, 1.0f), gTexTransform);
-    vout.TexC = mul(texC, gMatTransform).xy;
+    vout.TexC = mul(texC, matData.MatTransform).xy;
 
     return vout;
 }
@@ -169,10 +178,15 @@ float4 PS(VertexOut pin) : SV_Target
     // are interpolated across the pixels of a triangle. The interpolated
     // values are then fed into the pixel shader as input.
     
-    // Returns the interpolated color from the texture map at the specified
-    // (u,v) point using the filtering methods specified by the SamplerState
-    // object.
-    float4 diffuseAlbedo = gDiffuseMap.Sample(gsamAnisotropicWrap, pin.TexC) * gDiffuseAlbedo;
+    // Fetch the material data.
+    MaterialData matData = gMaterialData[gMaterialIndex];
+    float4 diffuseAlbedo = matData.DiffuseAlbedo;
+    float3 fresnelR0 = matData.FresnelR0;
+    float roughness = matData.Roughness;
+    uint diffuseTexIndex = matData.DiffuseMapIndex;
+    
+    // Dynamically look up the texture in the array.
+    diffuseAlbedo *= gDiffuseMap[diffuseTexIndex].Sample(gsamAnisotropicWrap, pin.TexC);
 	
 #ifdef ALPHA_TEST
 	// Discard pixel if texture alpha < 0.1.  We do this test as soon 
@@ -192,8 +206,8 @@ float4 PS(VertexOut pin) : SV_Target
     // Light terms.
     float4 ambient = gAmbientLight * diffuseAlbedo;
 
-    const float shininess = 1.0f - gRoughness;
-    Material mat = { diffuseAlbedo, gFresnelR0, shininess };
+    const float shininess = 1.0f - roughness;
+    Material mat = { diffuseAlbedo, fresnelR0, shininess };
     float3 shadowFactor = 1.0f;
     float4 directLight = ComputeLighting(gLights, mat, pin.PosW,
         pin.NormalW, toEyeW, shadowFactor);

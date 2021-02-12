@@ -11,6 +11,9 @@ using namespace DirectX;
 using namespace DirectX::PackedVector;
 using namespace std;
 
+// ------------------------------------------------------------------
+// Constructor - Create a console window in DEBUG mode.
+// ------------------------------------------------------------------
 ShapesApp::ShapesApp(HINSTANCE hInstance)
 	: D3DApp(hInstance)	 // The application's handle
 {

@@ -18,6 +18,8 @@
 #include "Common/MathHelper.h"
 #include "Common/UploadBuffer.h"
 #include "Common/GeometryGenerator.h"
+#include "Common/Camera.h"
+
 #include "FrameResource.h"
 #include "RenderItem.h"
 #include "Waves.h"
@@ -53,10 +55,9 @@ private:
 	virtual void OnMouseWheel(float wheelDelta, int x, int y)override;
 
 	void OnKeyboardInput(const GameTimer& gt);
-	void UpdateCamera(const GameTimer& gt);
 	void AnimateMaterials(const GameTimer& gt);
 	void UpdateObjectCBs(const GameTimer& gt);
-	void UpdateMaterialCBs(const GameTimer& gt);
+	void UpdateMaterialBuffer(const GameTimer& gt);
 	void UpdateMainPassCB(const GameTimer& gt);
 	void UpdateWaves(const GameTimer& gt);
 
@@ -114,16 +115,8 @@ private:
 
 	bool mIsWireframe = false;
 
-	DirectX::XMFLOAT3 mEyePos = { 0.0f, 0.0f, 0.0f };
-	DirectX::XMFLOAT4X4 mView = MathHelper::Identity4x4();
-	DirectX::XMFLOAT4X4 mProj = MathHelper::Identity4x4();
-
-	float mTheta = 1.5f * DirectX::XM_PI;
-	float mPhi = DirectX::XM_PIDIV2 - 0.1f;
-	float mRadius = 50.0f;
-
-	//float mSunTheta = 1.25f * DirectX::XM_PI;
-	//float mSunPhi = DirectX::XM_PIDIV4;
+	Camera mCamera;
+	DirectX::XMFLOAT3 mDefaultCamPos = { 15.0f, 18.0f, -78.0f };
 
 	// Keeps track of the old mouse position. Useful for determining how far 
 	// the mouse moved in a single frame.

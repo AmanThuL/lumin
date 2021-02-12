@@ -15,6 +15,12 @@ struct ObjectConstants
 {
     DirectX::XMFLOAT4X4 World = MathHelper::Identity4x4();
     DirectX::XMFLOAT4X4 TexTransform = MathHelper::Identity4x4();
+
+    // Dynamic indexing
+    UINT     MaterialIndex;
+    UINT     ObjPad0;
+    UINT     ObjPad1;
+    UINT     ObjPad2;
 };
 
 // Stores constant data that is fixed over a given rendering pass
@@ -49,6 +55,21 @@ struct PassConstants
     Light Lights[MaxLights];
 };
 
+struct MaterialData
+{
+    DirectX::XMFLOAT4 DiffuseAlbedo = { 1.0f, 1.0f, 1.0f, 1.0f };
+    DirectX::XMFLOAT3 FresnelR0 = { 0.01f, 0.01f, 0.01f };
+    float Roughness = 64.0f;
+
+    // Used in texture mapping.
+    DirectX::XMFLOAT4X4 MatTransform = MathHelper::Identity4x4();
+
+    UINT DiffuseMapIndex = 0;
+    UINT MaterialPad0;
+    UINT MaterialPad1;
+    UINT MaterialPad2;
+};
+
 struct Vertex
 {
     DirectX::XMFLOAT3 Pos;
@@ -80,8 +101,9 @@ public:
 	// We cannot update a cbuffer until the GPU is done processing the
 	// commands that reference it. So each frame needs their own cbuffers.
     std::unique_ptr<UploadBuffer<PassConstants>> PassCB = nullptr;
-    std::unique_ptr<UploadBuffer<MaterialConstants>> MaterialCB = nullptr;
     std::unique_ptr<UploadBuffer<ObjectConstants>> ObjectCB = nullptr;
+
+    std::unique_ptr<UploadBuffer<MaterialData>> MaterialBuffer = nullptr;
 
     // We cannot update a dynamic vertex buffer until the GPU is done processing
     // the commands that reference it.  So each frame needs their own.

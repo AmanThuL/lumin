@@ -17,6 +17,8 @@
 #include <crtdbg.h>
 #endif
 
+#include <iostream>
+
 #include "d3dUtil.h"
 #include "GameTimer.h"
 
@@ -67,10 +69,10 @@ public:
 
 	// Convenience methods for handling mouse input, since we
 	// can easily grab mouse input from OS-level messages
-	virtual void OnMouseDown(WPARAM btnState, int x, int y) { }
-	virtual void OnMouseUp(WPARAM btnState, int x, int y) { }
-	virtual void OnMouseMove(WPARAM btnState, int x, int y) { }
-	virtual void OnMouseWheel(float wheelDelta, int x, int y) { }
+	virtual void OnMouseDown(WPARAM btnState, int x, int y) {}
+	virtual void OnMouseUp(WPARAM btnState, int x, int y) {}
+	virtual void OnMouseMove(WPARAM btnState, int x, int y) {}
+	virtual void OnMouseWheel(float wheelDelta, int x, int y) {}
 
 protected:
 	// Initialization methods
