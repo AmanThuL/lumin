@@ -22,6 +22,16 @@
 // Include structures and functions for lighting.
 #include "LightingUtil.hlsl"
 
+struct InstanceData
+{
+    float4x4 World;
+    float4x4 TexTransform;
+    uint MaterialIndex;
+    uint InstPad0;
+    uint InstPad1;
+    uint InstPad2;
+};
+
 struct MaterialData
 {
     float4 DiffuseAlbedo;
@@ -38,11 +48,12 @@ struct MaterialData
 // An array of textures, which is only supported in shader model 5.1+. Unlike
 // Texture2DArray, the textures in this array can be different sizes and
 // formats, making it more flexible than texture arrays.
-Texture2D gDiffuseMap[4] : register(t0);
+Texture2D gDiffuseMap[7] : register(t0);
 
 // Put in space1, so the texture array does not overlap with these resources.
-// The texture array will occupy registers t0, t1, ..., t3 in space0.
-StructuredBuffer<MaterialData> gMaterialData : register(t0, space1);
+// The texture array will occupy registers t0, t1, ..., t6 in space0.
+StructuredBuffer<InstanceData> gInstanceData : register(t0, space1);
+StructuredBuffer<MaterialData> gMaterialData : register(t1, space1);
 
 
 // Sampler objects definition     
@@ -53,19 +64,8 @@ SamplerState gsamLinearClamp      : register(s3);
 SamplerState gsamAnisotropicWrap  : register(s4);
 SamplerState gsamAnisotropicClamp : register(s5);
 
-// Constant data that varies per frame
-cbuffer cbPerObject : register(b0)
-{
-    float4x4 gWorld;
-    float4x4 gTexTransform;
-    uint gMaterialIndex;
-    uint gObjPad0;
-    uint gObjPad1;
-    uint gObjPad2;
-};
-
 // Constant data that varies per material.
-cbuffer cbPass : register(b1)
+cbuffer cbPass : register(b0)
 {
     float4x4 gView;
     float4x4 gInvView;
@@ -132,6 +132,10 @@ struct VertexOut
     float3 PosW         : POSITION;     // XYZ position (World Space)
     float3 NormalW		: NORMAL;		// Normal (World Space)
     float2 TexC         : TEXCOORD;     // Texture coordinates (u,v)
+    
+    // nointerpolation is used so the index is not interpolated across the
+    // triangle.
+    nointerpolation uint MatIndex   : MATINDEX;
 };
 
 // ------------------------------------------------------------------
@@ -140,25 +144,36 @@ struct VertexOut
 // - Input is exactly one vertex worth of data (defined by a struct)
 // - Output is a single struct of data to pass down the pipeline
 // ------------------------------------------------------------------
-VertexOut VS(VertexIn vin)
+VertexOut VS(VertexIn vin, uint instanceID : SV_InstanceID)
 {
     VertexOut vout = (VertexOut) 0.0f;
     
+    // Fetch the instance data.
+    // Direct3D provides the system value identifier SV_InstanceID to tell
+    // which instance is being drawn in the vS.
+    InstanceData instData = gInstanceData[instanceID];
+    float4x4 world = instData.World;
+    float4x4 texTransform = instData.TexTransform;
+    uint matIndex = instData.MaterialIndex;
+    
+    vout.MatIndex = matIndex;
+    
     // Fetch the material data.
-    MaterialData matData = gMaterialData[gMaterialIndex];
+    MaterialData matData = gMaterialData[matIndex];
 	
     // Transform to world space.
-    float4 posW = mul(float4(vin.PosL, 1.0f), gWorld);
+    float4 posW = mul(float4(vin.PosL, 1.0f), world);
     vout.PosW = posW.xyz;
 
-    // Assumes nonuniform scaling; otherwise, need to use inverse-transpose of world matrix.
-    vout.NormalW = mul(vin.NormalL, (float3x3) gWorld);
+    // Assumes nonuniform scaling; otherwise, need to use inverse-transpose of 
+    // world matrix.
+    vout.NormalW = mul(vin.NormalL, (float3x3)world);
 
     // Transform to homogeneous clip space.
     vout.PosH = mul(posW, gViewProj);
 	
 	// Output vertex attributes for interpolation across triangle.
-    float4 texC = mul(float4(vin.TexC, 0.0f, 1.0f), gTexTransform);
+    float4 texC = mul(float4(vin.TexC, 0.0f, 1.0f), texTransform);
     vout.TexC = mul(texC, matData.MatTransform).xy;
 
     return vout;
@@ -179,7 +194,7 @@ float4 PS(VertexOut pin) : SV_Target
     // values are then fed into the pixel shader as input.
     
     // Fetch the material data.
-    MaterialData matData = gMaterialData[gMaterialIndex];
+    MaterialData matData = gMaterialData[pin.MatIndex];
     float4 diffuseAlbedo = matData.DiffuseAlbedo;
     float3 fresnelR0 = matData.FresnelR0;
     float roughness = matData.Roughness;

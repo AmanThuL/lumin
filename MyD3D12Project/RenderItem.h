@@ -18,6 +18,7 @@ struct RenderItem
 	// Render Item: The set of data needed to submit a full draw call to
 	// the rendering pipeline.
 	RenderItem() = default;
+	RenderItem(const RenderItem& rhs) = delete;
 
 	// World matrix of the shape that describes the object's local space
 	// relative to the world space, which defines the position, orientation,
@@ -50,8 +51,16 @@ struct RenderItem
 	// Primitive topology.
 	D3D12_PRIMITIVE_TOPOLOGY PrimitiveType = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
 
+	DirectX::BoundingBox Bounds;
+
+	// The per-instance data in system memory is stored as part of the render-
+	// item structure, as the render-item maintains how many times it should
+	// be instanced.
+	std::vector<InstanceData> Instances;
+
 	// DrawIndexedInstanced parameters.
 	UINT IndexCount = 0;
+	UINT InstanceCount = 0;
 	UINT StartIndexLocation = 0;
 	int BaseVertexLocation = 0;
 };

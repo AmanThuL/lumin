@@ -828,11 +828,11 @@ void D3DApp::UpdateTitleBarStats()
 	// Append the version of DirectX the app is using
 	switch (dxFeatureLevel)
 	{
-	case D3D_FEATURE_LEVEL_12_1: output << L"    DX 12.1"; break;
-	case D3D_FEATURE_LEVEL_12_0: output << L"    DX 12.0"; break;
-	case D3D_FEATURE_LEVEL_11_1: output << L"    DX 11.1"; break;
-	case D3D_FEATURE_LEVEL_11_0: output << L"    DX 11.0"; break;
-	default:                     output << L"    DX ???";  break;
+	case D3D_FEATURE_LEVEL_12_1: output << L"    DirectX 12 (FL 12.1)"; break;
+	case D3D_FEATURE_LEVEL_12_0: output << L"    DirectX 12 (FL 12.0)"; break;
+	case D3D_FEATURE_LEVEL_11_1: output << L"    DirectX 12 (FL 11.1)"; break;
+	case D3D_FEATURE_LEVEL_11_0: output << L"    DirectX 12 (FL 11.0)"; break;
+	default:                     output << L"    ???";  break;
 	}
 
 	SetWindowText(mhMainWnd, output.str().c_str());

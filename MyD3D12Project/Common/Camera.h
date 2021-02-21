@@ -15,6 +15,8 @@
 
 #include "d3dUtil.h"
 
+#include <iostream>
+
 class Camera
 {
 public:

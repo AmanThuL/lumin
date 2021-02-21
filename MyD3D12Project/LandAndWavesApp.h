@@ -56,7 +56,7 @@ private:
 
 	void OnKeyboardInput(const GameTimer& gt);
 	void AnimateMaterials(const GameTimer& gt);
-	void UpdateObjectCBs(const GameTimer& gt);
+	void UpdateInstanceData(const GameTimer& gt);
 	void UpdateMaterialBuffer(const GameTimer& gt);
 	void UpdateMainPassCB(const GameTimer& gt);
 	void UpdateWaves(const GameTimer& gt);
@@ -108,6 +108,9 @@ private:
 
 	// Render items divided by PSO.
 	std::vector<RenderItem*> mRitemLayer[(int)RenderLayer::Count];
+
+	// Instance count
+	UINT mInstanceCount = 0;
 
 	std::unique_ptr<Waves> mWaves;
 

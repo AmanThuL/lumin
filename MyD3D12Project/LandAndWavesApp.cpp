@@ -114,7 +114,7 @@ void LandAndWavesApp::Update(const GameTimer& gt)
     }
 
     AnimateMaterials(gt);
-    UpdateObjectCBs(gt);
+    UpdateInstanceData(gt);
     UpdateMaterialBuffer(gt);
     UpdateMainPassCB(gt);
 
@@ -173,14 +173,14 @@ void LandAndWavesApp::Draw(const GameTimer& gt)
     // Set the root signature to the command list.
     mCommandList->SetGraphicsRootSignature(mRootSignature.Get());
 
-    // Bind per-pass constant buffer. We only need to do this once per-pass.
-    auto passCB = mCurrFrameResource->PassCB->Resource();
-    mCommandList->SetGraphicsRootConstantBufferView(1, passCB->GetGPUVirtualAddress());
-
     // Bind all the materials used in this scene. For structured buffers, we
     // can bypass the heap and set as a root descriptor.
     auto matBuffer = mCurrFrameResource->MaterialBuffer->Resource();
-    mCommandList->SetGraphicsRootShaderResourceView(2, matBuffer->GetGPUVirtualAddress());
+    mCommandList->SetGraphicsRootShaderResourceView(1, matBuffer->GetGPUVirtualAddress());
+
+    // Bind per-pass constant buffer. We only need to do this once per-pass.
+    auto passCB = mCurrFrameResource->PassCB->Resource();
+    mCommandList->SetGraphicsRootConstantBufferView(2, passCB->GetGPUVirtualAddress());
 
     // Bind all the textures used in this scene. Observe that we only have to
     // specify the first descriptor in the table. The root signature knows how
@@ -290,31 +290,35 @@ void LandAndWavesApp::AnimateMaterials(const GameTimer& gt)
 }
 
 // ------------------------------------------------------------------
-// Update the per object constant buffer only when an object's world
-// matrix changes.
+// Update the per instance data.
 // ------------------------------------------------------------------
-void LandAndWavesApp::UpdateObjectCBs(const GameTimer& gt)
+void LandAndWavesApp::UpdateInstanceData(const GameTimer& gt)
 {
-    auto currObjectCB = mCurrFrameResource->ObjectCB.get();
+    XMMATRIX view = mCamera.GetView();
+    XMMATRIX invView = XMMatrixInverse(&XMMatrixDeterminant(view), view);
+
+    auto currInstanceBuffer = mCurrFrameResource->InstanceBuffer.get();
     for (auto& e : mAllRitems)
     {
-        // Only update the cbuffer data if the constants have changed.  
-        // This needs to be tracked per frame resource.
-        if (e->NumFramesDirty > 0)
+        const auto& instanceData = e->Instances;
+
+        int visibleInstanceCount = 0;
+
+        for (UINT i = 0; i < (UINT)instanceData.size(); ++i)
         {
-            XMMATRIX world = XMLoadFloat4x4(&e->World);
-            XMMATRIX texTransform = XMLoadFloat4x4(&e->TexTransform);
+            XMMATRIX world = XMLoadFloat4x4(&instanceData[i].World);
+            XMMATRIX texTransform = XMLoadFloat4x4(&instanceData[i].TexTransform);
 
-            ObjectConstants objConstants;
-            XMStoreFloat4x4(&objConstants.World, XMMatrixTranspose(world));
-            XMStoreFloat4x4(&objConstants.TexTransform, XMMatrixTranspose(texTransform));
-            objConstants.MaterialIndex = e->Mat->MatCBIndex;
+            InstanceData data;
+            XMStoreFloat4x4(&data.World, XMMatrixTranspose(world));
+            XMStoreFloat4x4(&data.TexTransform, XMMatrixTranspose(texTransform));
+            data.MaterialIndex = instanceData[i].MaterialIndex;
 
-            currObjectCB->CopyData(e->ObjCBIndex, objConstants);
-
-            // Next FrameResource need to be updated too.
-            e->NumFramesDirty--;
+            // Write the instance data to structured buffer for the visible objects.
+            currInstanceBuffer->CopyData(visibleInstanceCount++, data);
         }
+
+        e->InstanceCount = visibleInstanceCount;
     }
 }
 
@@ -448,12 +452,12 @@ void LandAndWavesApp::UpdateWaves(const GameTimer& gt)
 // ------------------------------------------------------------------
 void LandAndWavesApp::LoadTextures()
 {
-    auto grassTex = std::make_unique<Texture>();
-    grassTex->Name = "grassTex";
-    grassTex->Filename = L"Textures/grass.dds";
+    auto bricksTex = std::make_unique<Texture>();
+    bricksTex->Name = "bricksTex";
+    bricksTex->Filename = L"Textures/bricks.dds";
     ThrowIfFailed(DirectX::CreateDDSTextureFromFile12(md3dDevice.Get(),
-        mCommandList.Get(), grassTex->Filename.c_str(),
-        grassTex->Resource, grassTex->UploadHeap));
+        mCommandList.Get(), bricksTex->Filename.c_str(),
+        bricksTex->Resource, bricksTex->UploadHeap));
 
     auto waterTex = std::make_unique<Texture>();
     waterTex->Name = "waterTex";
@@ -462,16 +466,50 @@ void LandAndWavesApp::LoadTextures()
         mCommandList.Get(), waterTex->Filename.c_str(),
         waterTex->Resource, waterTex->UploadHeap));
 
-    auto crateTex = std::make_unique<Texture>();
-    crateTex->Name = "crateTex";
-    crateTex->Filename = L"Textures/WoodCrate02.dds";
+    // Crate textures below
+    auto crate01Tex = std::make_unique<Texture>();
+    crate01Tex->Name = "crate01Tex";
+    crate01Tex->Filename = L"Textures/WoodCrate01.dds";
     ThrowIfFailed(DirectX::CreateDDSTextureFromFile12(md3dDevice.Get(),
-        mCommandList.Get(), crateTex->Filename.c_str(),
-        crateTex->Resource, crateTex->UploadHeap));
+        mCommandList.Get(), crate01Tex->Filename.c_str(),
+        crate01Tex->Resource, crate01Tex->UploadHeap));
 
-    mTextures[grassTex->Name] = std::move(grassTex);
+    auto crate02Tex = std::make_unique<Texture>();
+    crate02Tex->Name = "crate02Tex";
+    crate02Tex->Filename = L"Textures/WoodCrate02.dds";
+    ThrowIfFailed(DirectX::CreateDDSTextureFromFile12(md3dDevice.Get(),
+        mCommandList.Get(), crate02Tex->Filename.c_str(),
+        crate02Tex->Resource, crate02Tex->UploadHeap));
+
+    auto iceTex = std::make_unique<Texture>();
+    iceTex->Name = "iceTex";
+    iceTex->Filename = L"Textures/ice.dds";
+    ThrowIfFailed(DirectX::CreateDDSTextureFromFile12(md3dDevice.Get(),
+        mCommandList.Get(), iceTex->Filename.c_str(),
+        iceTex->Resource, iceTex->UploadHeap));
+
+    auto grassTex = std::make_unique<Texture>();
+    grassTex->Name = "grassTex";
+    grassTex->Filename = L"Textures/grass.dds";
+    ThrowIfFailed(DirectX::CreateDDSTextureFromFile12(md3dDevice.Get(),
+        mCommandList.Get(), grassTex->Filename.c_str(),
+        grassTex->Resource, grassTex->UploadHeap));
+
+    auto whiteTex = std::make_unique<Texture>();
+    whiteTex->Name = "whiteTex";
+    whiteTex->Filename = L"Textures/white1x1.dds";
+    ThrowIfFailed(DirectX::CreateDDSTextureFromFile12(md3dDevice.Get(),
+        mCommandList.Get(), whiteTex->Filename.c_str(),
+        whiteTex->Resource, whiteTex->UploadHeap));
+
+    // Add textures to texture dictionary
+    mTextures[bricksTex->Name] = std::move(bricksTex);
     mTextures[waterTex->Name] = std::move(waterTex);
-    mTextures[crateTex->Name] = std::move(crateTex);
+    mTextures[crate01Tex->Name] = std::move(crate01Tex);
+    mTextures[crate02Tex->Name] = std::move(crate02Tex);
+    mTextures[iceTex->Name] = std::move(iceTex);
+    mTextures[grassTex->Name] = std::move(grassTex);
+    mTextures[whiteTex->Name] = std::move(whiteTex);
 }
 
 // ------------------------------------------------------------------
@@ -496,16 +534,16 @@ void LandAndWavesApp::BuildRootSignature()
     //		+ Root constant
 
     CD3DX12_DESCRIPTOR_RANGE texTable;
-    texTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 4, 0, 0);
+    texTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 7, 0, 0);
 
     // Root parameter can be a table, root descriptor or root constants.
     CD3DX12_ROOT_PARAMETER slotRootParameter[4];
 
     // Create root CBVs.
     // Performance TIP: Order from most frequent to least frequent.
-    slotRootParameter[0].InitAsConstantBufferView(0);
-    slotRootParameter[1].InitAsConstantBufferView(1);
-    slotRootParameter[2].InitAsShaderResourceView(0, 1);
+    slotRootParameter[0].InitAsShaderResourceView(0, 1);
+    slotRootParameter[1].InitAsShaderResourceView(1, 1);
+    slotRootParameter[2].InitAsConstantBufferView(0);
     slotRootParameter[3].InitAsDescriptorTable(1, &texTable, D3D12_SHADER_VISIBILITY_PIXEL);
 
 
@@ -523,6 +561,7 @@ void LandAndWavesApp::BuildRootSignature()
     HRESULT hr = D3D12SerializeRootSignature(&rootSigDesc, D3D_ROOT_SIGNATURE_VERSION_1,
         serializedRootSig.GetAddressOf(), errorBlob.GetAddressOf());
 
+    // Error checking
     if (errorBlob != nullptr)
     {
         ::OutputDebugStringA((char*)errorBlob->GetBufferPointer());
@@ -545,7 +584,7 @@ void LandAndWavesApp::BuildDescriptorHeaps()
     // Create the SRV heap.
     //
     D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
-    srvHeapDesc.NumDescriptors = 3;
+    srvHeapDesc.NumDescriptors = 7;
     srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
     srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
     ThrowIfFailed(md3dDevice->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&mSrvDescriptorHeap)));
@@ -555,17 +594,24 @@ void LandAndWavesApp::BuildDescriptorHeaps()
     //
     CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor(mSrvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
 
-    auto grassTex = mTextures["grassTex"]->Resource;
+    auto bricksTex = mTextures["bricksTex"]->Resource;
     auto waterTex = mTextures["waterTex"]->Resource;
-    auto crateTex = mTextures["crateTex"]->Resource;
+    auto crate01Tex = mTextures["crate01Tex"]->Resource;
+    auto crate02Tex = mTextures["crate02Tex"]->Resource;
+    auto iceTex = mTextures["iceTex"]->Resource;
+    auto grassTex = mTextures["grassTex"]->Resource;
+    auto whiteTex = mTextures["whiteTex"]->Resource;
 
     D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
     srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-    srvDesc.Format = grassTex->GetDesc().Format;
+
+    // Descriptor for bricksTex
+    srvDesc.Format = bricksTex->GetDesc().Format;
     srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
     srvDesc.Texture2D.MostDetailedMip = 0;
-    srvDesc.Texture2D.MipLevels = -1;
-    md3dDevice->CreateShaderResourceView(grassTex.Get(), &srvDesc, hDescriptor);
+    srvDesc.Texture2D.MipLevels = bricksTex->GetDesc().MipLevels;
+    srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
+    md3dDevice->CreateShaderResourceView(bricksTex.Get(), &srvDesc, hDescriptor);
 
     // next descriptor
     hDescriptor.Offset(1, mCbvSrvDescriptorSize);
@@ -577,9 +623,37 @@ void LandAndWavesApp::BuildDescriptorHeaps()
     // next descriptor
     hDescriptor.Offset(1, mCbvSrvDescriptorSize);
 
-    srvDesc.Format = crateTex->GetDesc().Format;
-    srvDesc.Texture2D.MipLevels = crateTex->GetDesc().MipLevels;
-    md3dDevice->CreateShaderResourceView(crateTex.Get(), &srvDesc, hDescriptor);
+    srvDesc.Format = crate01Tex->GetDesc().Format;
+    srvDesc.Texture2D.MipLevels = crate01Tex->GetDesc().MipLevels;
+    md3dDevice->CreateShaderResourceView(crate01Tex.Get(), &srvDesc, hDescriptor);
+
+    // next descriptor
+    hDescriptor.Offset(1, mCbvSrvDescriptorSize);
+
+    srvDesc.Format = crate02Tex->GetDesc().Format;
+    srvDesc.Texture2D.MipLevels = crate02Tex->GetDesc().MipLevels;
+    md3dDevice->CreateShaderResourceView(crate02Tex.Get(), &srvDesc, hDescriptor);
+
+    // next descriptor
+    hDescriptor.Offset(1, mCbvSrvDescriptorSize);
+
+    srvDesc.Format = iceTex->GetDesc().Format;
+    srvDesc.Texture2D.MipLevels = iceTex->GetDesc().MipLevels;
+    md3dDevice->CreateShaderResourceView(iceTex.Get(), &srvDesc, hDescriptor);
+
+    // next descriptor
+    hDescriptor.Offset(1, mCbvSrvDescriptorSize);
+
+    srvDesc.Format = grassTex->GetDesc().Format;
+    srvDesc.Texture2D.MipLevels = grassTex->GetDesc().MipLevels;
+    md3dDevice->CreateShaderResourceView(grassTex.Get(), &srvDesc, hDescriptor);
+
+    // next descriptor
+    hDescriptor.Offset(1, mCbvSrvDescriptorSize);
+
+    srvDesc.Format = whiteTex->GetDesc().Format;
+    srvDesc.Texture2D.MipLevels = whiteTex->GetDesc().MipLevels;
+    md3dDevice->CreateShaderResourceView(whiteTex.Get(), &srvDesc, hDescriptor);
 }
 
 // ------------------------------------------------------------------
@@ -885,7 +959,7 @@ void LandAndWavesApp::BuildFrameResources()
     for (int i = 0; i < gNumFrameResources; ++i)
     {
         mFrameResources.push_back(std::make_unique<FrameResource>(md3dDevice.Get(),
-            1, (UINT)mAllRitems.size(), (UINT)mMaterials.size(), mWaves->VertexCount()));
+            1, mInstanceCount, (UINT)mMaterials.size(), mWaves->VertexCount()));
     }
 }
 
@@ -894,13 +968,13 @@ void LandAndWavesApp::BuildFrameResources()
 // ------------------------------------------------------------------
 void LandAndWavesApp::BuildMaterials()
 {
-    auto grass = std::make_unique<Material>();
-    grass->Name = "grass";
-    grass->MatCBIndex = 0;
-    grass->DiffuseSrvHeapIndex = 0;
-    grass->DiffuseAlbedo = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
-    grass->FresnelR0 = XMFLOAT3(0.01f, 0.01f, 0.01f);
-    grass->Roughness = 0.125f;
+    auto bricks = std::make_unique<Material>();
+    bricks->Name = "bricks";
+    bricks->MatCBIndex = 0;
+    bricks->DiffuseSrvHeapIndex = 0;
+    bricks->DiffuseAlbedo = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+    bricks->FresnelR0 = XMFLOAT3(0.02f, 0.02f, 0.02f);
+    bricks->Roughness = 0.1f;
 
     // This is not a good water material definition, but we do not have all the rendering
     // tools we need (transparency, environment reflection), so we fake it for now.
@@ -912,17 +986,53 @@ void LandAndWavesApp::BuildMaterials()
     water->FresnelR0 = XMFLOAT3(0.2f, 0.2f, 0.2f);
     water->Roughness = 0.0f;
 
-    auto crate = std::make_unique<Material>();
-    crate->Name = "crate";
-    crate->MatCBIndex = 2;
-    crate->DiffuseSrvHeapIndex = 2;
-    crate->DiffuseAlbedo = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
-    crate->FresnelR0 = XMFLOAT3(0.1f, 0.1f, 0.1f);
-    crate->Roughness = 0.25f;
+    auto crate01 = std::make_unique<Material>();
+    crate01->Name = "crate01";
+    crate01->MatCBIndex = 2;
+    crate01->DiffuseSrvHeapIndex = 2;
+    crate01->DiffuseAlbedo = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+    crate01->FresnelR0 = XMFLOAT3(0.1f, 0.1f, 0.1f);
+    crate01->Roughness = 0.25f;
 
-    mMaterials["grass"] = std::move(grass);
+    auto crate02 = std::make_unique<Material>();
+    crate02->Name = "crate02";
+    crate02->MatCBIndex = 2;
+    crate02->DiffuseSrvHeapIndex = 2;
+    crate02->DiffuseAlbedo = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+    crate02->FresnelR0 = XMFLOAT3(0.1f, 0.1f, 0.1f);
+    crate02->Roughness = 0.25f;
+
+    auto ice = std::make_unique<Material>();
+    ice->Name = "ice";
+    ice->MatCBIndex = 4;
+    ice->DiffuseSrvHeapIndex = 4;
+    ice->DiffuseAlbedo = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+    ice->FresnelR0 = XMFLOAT3(0.1f, 0.1f, 0.1f);
+    ice->Roughness = 0.0f;
+
+    auto grass = std::make_unique<Material>();
+    grass->Name = "grass";
+    grass->MatCBIndex = 5;
+    grass->DiffuseSrvHeapIndex = 5;
+    grass->DiffuseAlbedo = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+    grass->FresnelR0 = XMFLOAT3(0.05f, 0.05f, 0.05f);
+    grass->Roughness = 0.2f;
+
+    auto white = std::make_unique<Material>();
+    white->Name = "white";
+    white->MatCBIndex = 6;
+    white->DiffuseSrvHeapIndex = 6;
+    white->DiffuseAlbedo = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+    white->FresnelR0 = XMFLOAT3(0.05f, 0.05f, 0.05f);
+    white->Roughness = 0.5f;
+
+    mMaterials["bricks"] = std::move(bricks);
     mMaterials["water"] = std::move(water);
-    mMaterials["crate"] = std::move(crate);
+    mMaterials["crate01"] = std::move(crate01);
+    mMaterials["crate02"] = std::move(crate02);
+    mMaterials["ice"] = std::move(ice);
+    mMaterials["grass"] = std::move(grass);
+    mMaterials["white"] = std::move(white);
 }
 
 // ------------------------------------------------------------------
@@ -932,6 +1042,55 @@ void LandAndWavesApp::BuildMaterials()
 // ------------------------------------------------------------------
 void LandAndWavesApp::BuildRenderItems()
 {
+    // Box render item
+    auto boxRitem = std::make_unique<RenderItem>();
+    XMStoreFloat4x4(&boxRitem->World, XMMatrixTranslation(3.0f, 2.0f, -9.0f));
+    boxRitem->ObjCBIndex = 2;
+    boxRitem->Mat = mMaterials["crate01"].get();
+    boxRitem->Geo = mGeometries["boxGeo"].get();
+    boxRitem->PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+    boxRitem->IndexCount = boxRitem->Geo->DrawArgs["box"].IndexCount;
+    boxRitem->StartIndexLocation = boxRitem->Geo->DrawArgs["box"].StartIndexLocation;
+    boxRitem->BaseVertexLocation = boxRitem->Geo->DrawArgs["box"].BaseVertexLocation;
+
+    // Generate instance data for box render item.
+    const int n = 5;
+    mInstanceCount = n * n * n;
+    boxRitem->Instances.resize(mInstanceCount);
+
+    float width = 200.0f;
+    float height = 200.0f;
+    float depth = 200.0f;
+
+    float x = -0.5f * width;
+    float y = -0.5f * height;
+    float z = -0.5f * depth;
+    float dx = width / (n - 1);
+    float dy = height / (n - 1);
+    float dz = depth / (n - 1);
+    for (int k = 0; k < n; ++k)
+    {
+        for (int i = 0; i < n; ++i)
+        {
+            for (int j = 0; j < n; ++j)
+            {
+                int index = k * n * n + i * n + j;
+                // Position instanced along a 3D grid.
+                boxRitem->Instances[index].World = XMFLOAT4X4(
+                    1.0f, 0.0f, 0.0f, 0.0f,
+                    0.0f, 1.0f, 0.0f, 0.0f,
+                    0.0f, 0.0f, 1.0f, 0.0f,
+                    x + j * dx, y + i * dy, z + k * dz, 1.0f);
+
+                XMStoreFloat4x4(&boxRitem->Instances[index].TexTransform, XMMatrixScaling(2.0f, 2.0f, 1.0f));
+                boxRitem->Instances[index].MaterialIndex = index % 4 + 2;
+            }
+        }
+    }
+
+    mRitemLayer[(int)RenderLayer::Opaque].push_back(boxRitem.get());
+
+    // Water render item
     auto wavesRitem = std::make_unique<RenderItem>();
     wavesRitem->World = MathHelper::Identity4x4();
     XMStoreFloat4x4(&wavesRitem->TexTransform, XMMatrixScaling(5.0f, 5.0f, 1.0f));
@@ -947,6 +1106,7 @@ void LandAndWavesApp::BuildRenderItems()
 
     mRitemLayer[(int)RenderLayer::Transparent].push_back(wavesRitem.get());
 
+    // Grid render item
     auto gridRitem = std::make_unique<RenderItem>();
     gridRitem->World = MathHelper::Identity4x4();
     XMStoreFloat4x4(&gridRitem->TexTransform, XMMatrixScaling(5.0f, 5.0f, 1.0f));
@@ -959,18 +1119,6 @@ void LandAndWavesApp::BuildRenderItems()
     gridRitem->BaseVertexLocation = gridRitem->Geo->DrawArgs["grid"].BaseVertexLocation;
 
     mRitemLayer[(int)RenderLayer::Opaque].push_back(gridRitem.get());
-
-    auto boxRitem = std::make_unique<RenderItem>();
-    XMStoreFloat4x4(&boxRitem->World, XMMatrixTranslation(3.0f, 2.0f, -9.0f));
-    boxRitem->ObjCBIndex = 2;
-    boxRitem->Mat = mMaterials["crate"].get();
-    boxRitem->Geo = mGeometries["boxGeo"].get();
-    boxRitem->PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
-    boxRitem->IndexCount = boxRitem->Geo->DrawArgs["box"].IndexCount;
-    boxRitem->StartIndexLocation = boxRitem->Geo->DrawArgs["box"].StartIndexLocation;
-    boxRitem->BaseVertexLocation = boxRitem->Geo->DrawArgs["box"].BaseVertexLocation;
-
-    mRitemLayer[(int)RenderLayer::Opaque].push_back(boxRitem.get());
 
     mAllRitems.push_back(std::move(wavesRitem));
     mAllRitems.push_back(std::move(gridRitem));
@@ -985,10 +1133,6 @@ void LandAndWavesApp::BuildRenderItems()
 // ------------------------------------------------------------------
 void LandAndWavesApp::DrawRenderItems(ID3D12GraphicsCommandList* cmdList, const std::vector<RenderItem*>& ritems)
 {
-    UINT objCBByteSize = d3dUtil::CalcConstantBufferByteSize(sizeof(ObjectConstants));
-
-    auto objectCB = mCurrFrameResource->ObjectCB->Resource();
-
     // For each render item...
     for (size_t i = 0; i < ritems.size(); ++i)
     {
@@ -998,16 +1142,13 @@ void LandAndWavesApp::DrawRenderItems(ID3D12GraphicsCommandList* cmdList, const 
         cmdList->IASetIndexBuffer(&ri->Geo->IndexBufferView());
         cmdList->IASetPrimitiveTopology(ri->PrimitiveType);
 
-        D3D12_GPU_VIRTUAL_ADDRESS objCBAddress = objectCB->GetGPUVirtualAddress() + ri->ObjCBIndex * objCBByteSize;
+        // Set the instance buffer to use for this render-item.
+        // For structured buffers, we can bypass the heap and set as a root 
+        // descriptor.
+        auto instanceBuffer = mCurrFrameResource->InstanceBuffer->Resource();
+        mCommandList->SetGraphicsRootShaderResourceView(0, instanceBuffer->GetGPUVirtualAddress());
 
-        // Assume the root signature has been defined to expect a table of
-        // SRV to be bound to the 0th slot parameter.
-        //CD3DX12_GPU_DESCRIPTOR_HANDLE tex(mSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
-        //tex.Offset(ri->Mat->DiffuseSrvHeapIndex, mCbvSrvDescriptorSize);
-
-        cmdList->SetGraphicsRootConstantBufferView(0, objCBAddress);
-
-        cmdList->DrawIndexedInstanced(ri->IndexCount, 1, ri->StartIndexLocation, ri->BaseVertexLocation, 0);
+        cmdList->DrawIndexedInstanced(ri->IndexCount, ri->InstanceCount, ri->StartIndexLocation, ri->BaseVertexLocation, 0);
     }
 }
 

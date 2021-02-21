@@ -5,7 +5,7 @@
 #include "Camera.h"
 
 using namespace DirectX;
-
+using namespace std;
 
 #pragma region Constructor/Destructor
 
@@ -437,7 +437,6 @@ void Camera::UpdateViewMatrix()
 
 		mViewDirty = false;
 	}
-
 }
 
 #pragma endregion
