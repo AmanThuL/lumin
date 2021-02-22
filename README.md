@@ -1,5 +1,5 @@
-# MyD3D12Engine
-A C++ application with DirectX 12 API and shaders based on Frank D. Luna's *Introduction to 3D Game Programming with DirectX 12*.
+# MyD3D12Renderer
+A C++ rendering engine with DirectX 12 API and shaders based on Frank D. Luna's *Introduction to 3D Game Programming with DirectX 12*.
 More general information about this book can be found [here](http://www.d3dcoder.net/d3d12.htm).
 
 ---
