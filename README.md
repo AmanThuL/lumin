@@ -1,2 +1,2 @@
-# MyD3D12Engine
-A C++ application with DirectX 12 API and shaders
+# MyD3D12Renderer
+A C++ rendering engine with DirectX 12 API and shaders
