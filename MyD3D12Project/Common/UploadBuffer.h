@@ -1,7 +1,7 @@
 //*******************************************************************
 // UploadBuffer.h:
 //
-// Light warpper around an upload buffer. It handles the construction
+// Light wrapper around an upload buffer. It handles the construction
 // and destruction of an upload buffer resource, handles mapping and
 // unmapping the resource, and provides the CopyData method to update
 // a particular element in the buffer.
