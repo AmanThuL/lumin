@@ -454,14 +454,14 @@ void LandAndWavesApp::LoadTextures()
 {
     auto bricksTex = std::make_unique<Texture>();
     bricksTex->Name = "bricksTex";
-    bricksTex->Filename = L"Textures/bricks.dds";
+    bricksTex->Filename = L"../../engine/resources/textures/bricks.dds";
     ThrowIfFailed(DirectX::CreateDDSTextureFromFile12(md3dDevice.Get(),
         mCommandList.Get(), bricksTex->Filename.c_str(),
         bricksTex->Resource, bricksTex->UploadHeap));
 
     auto waterTex = std::make_unique<Texture>();
     waterTex->Name = "waterTex";
-    waterTex->Filename = L"Textures/water1.dds";
+    waterTex->Filename = L"../../engine/resources/textures/water1.dds";
     ThrowIfFailed(DirectX::CreateDDSTextureFromFile12(md3dDevice.Get(),
         mCommandList.Get(), waterTex->Filename.c_str(),
         waterTex->Resource, waterTex->UploadHeap));
@@ -469,35 +469,35 @@ void LandAndWavesApp::LoadTextures()
     // Crate textures below
     auto crate01Tex = std::make_unique<Texture>();
     crate01Tex->Name = "crate01Tex";
-    crate01Tex->Filename = L"Textures/WoodCrate01.dds";
+    crate01Tex->Filename = L"../../engine/resources/textures/WoodCrate01.dds";
     ThrowIfFailed(DirectX::CreateDDSTextureFromFile12(md3dDevice.Get(),
         mCommandList.Get(), crate01Tex->Filename.c_str(),
         crate01Tex->Resource, crate01Tex->UploadHeap));
 
     auto crate02Tex = std::make_unique<Texture>();
     crate02Tex->Name = "crate02Tex";
-    crate02Tex->Filename = L"Textures/WoodCrate02.dds";
+    crate02Tex->Filename = L"../../engine/resources/textures/WoodCrate02.dds";
     ThrowIfFailed(DirectX::CreateDDSTextureFromFile12(md3dDevice.Get(),
         mCommandList.Get(), crate02Tex->Filename.c_str(),
         crate02Tex->Resource, crate02Tex->UploadHeap));
 
     auto iceTex = std::make_unique<Texture>();
     iceTex->Name = "iceTex";
-    iceTex->Filename = L"Textures/ice.dds";
+    iceTex->Filename = L"../../engine/resources/textures/ice.dds";
     ThrowIfFailed(DirectX::CreateDDSTextureFromFile12(md3dDevice.Get(),
         mCommandList.Get(), iceTex->Filename.c_str(),
         iceTex->Resource, iceTex->UploadHeap));
 
     auto grassTex = std::make_unique<Texture>();
     grassTex->Name = "grassTex";
-    grassTex->Filename = L"Textures/grass.dds";
+    grassTex->Filename = L"../../engine/resources/textures/grass.dds";
     ThrowIfFailed(DirectX::CreateDDSTextureFromFile12(md3dDevice.Get(),
         mCommandList.Get(), grassTex->Filename.c_str(),
         grassTex->Resource, grassTex->UploadHeap));
 
     auto whiteTex = std::make_unique<Texture>();
     whiteTex->Name = "whiteTex";
-    whiteTex->Filename = L"Textures/white1x1.dds";
+    whiteTex->Filename = L"../../engine/resources/textures/white1x1.dds";
     ThrowIfFailed(DirectX::CreateDDSTextureFromFile12(md3dDevice.Get(),
         mCommandList.Get(), whiteTex->Filename.c_str(),
         whiteTex->Resource, whiteTex->UploadHeap));
@@ -676,9 +676,9 @@ void LandAndWavesApp::BuildShadersAndInputLayout()
         NULL, NULL
     };
 
-    mShaders["standardVS"] = d3dUtil::CompileShader(L"Shaders\\Default.hlsl", nullptr, "VS", "vs_5_1");
-    mShaders["opaquePS"] = d3dUtil::CompileShader(L"Shaders\\Default.hlsl", defines, "PS", "ps_5_1");
-    mShaders["alphaTestedPS"] = d3dUtil::CompileShader(L"Shaders\\Default.hlsl", alphaTestDefines, "PS", "ps_5_1");
+    mShaders["standardVS"] = d3dUtil::CompileShader(L"..\\..\\engine\\engine\\shaders\\Default.hlsl", nullptr, "VS", "vs_5_1");
+    mShaders["opaquePS"] = d3dUtil::CompileShader(L"..\\..\\engine\\engine\\shaders\\Default.hlsl", defines, "PS", "ps_5_1");
+    mShaders["alphaTestedPS"] = d3dUtil::CompileShader(L"..\\..\\engine\\engine\\shaders\\Default.hlsl", alphaTestDefines, "PS", "ps_5_1");
 
     mInputLayout =
     {

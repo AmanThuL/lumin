@@ -14,11 +14,11 @@
 
 #pragma once
 
-#include "Common/d3dApp.h"
-#include "Common/MathHelper.h"
-#include "Common/UploadBuffer.h"
-#include "Common/GeometryGenerator.h"
-#include "Common/Camera.h"
+#include "common/d3dApp.h"
+#include "common/MathHelper.h"
+#include "common/UploadBuffer.h"
+#include "common/GeometryGenerator.h"
+#include "common/Camera.h"
 
 #include "FrameResource.h"
 #include "RenderItem.h"
