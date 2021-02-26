@@ -26,6 +26,12 @@
     <ClCompile Include="Common\GameTimer.cpp" />
     <ClCompile Include="Common\GeometryGenerator.cpp" />
     <ClCompile Include="Common\MathHelper.cpp" />
+    <ClCompile Include="external\imgui\imgui.cpp" />
+    <ClCompile Include="external\imgui\imgui_draw.cpp" />
+    <ClCompile Include="external\imgui\imgui_impl_dx12.cpp" />
+    <ClCompile Include="external\imgui\imgui_impl_win32.cpp" />
+    <ClCompile Include="external\imgui\imgui_tables.cpp" />
+    <ClCompile Include="external\imgui\imgui_widgets.cpp" />
     <ClCompile Include="FrameResource.cpp" />
     <ClCompile Include="LandAndWavesApp.cpp" />
     <ClCompile Include="ShapesApp.cpp">
@@ -43,6 +49,14 @@
     <ClInclude Include="Common\GeometryGenerator.h" />
     <ClInclude Include="Common\MathHelper.h" />
     <ClInclude Include="Common\UploadBuffer.h" />
+    <ClInclude Include="external\imgui\imconfig.h" />
+    <ClInclude Include="external\imgui\imgui.h" />
+    <ClInclude Include="external\imgui\imgui_impl_dx12.h" />
+    <ClInclude Include="external\imgui\imgui_impl_win32.h" />
+    <ClInclude Include="external\imgui\imgui_internal.h" />
+    <ClInclude Include="external\imgui\imstb_rectpack.h" />
+    <ClInclude Include="external\imgui\imstb_textedit.h" />
+    <ClInclude Include="external\imgui\imstb_truetype.h" />
     <ClInclude Include="FrameResource.h" />
     <ClInclude Include="LandAndWavesApp.h" />
     <ClInclude Include="RenderItem.h" />
@@ -130,6 +144,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir)external\imgui;</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -145,6 +160,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir)external\imgui;</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -160,7 +176,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir)/Shaders;$(ProjectDir)/Common;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)external\imgui;$(ProjectDir)/Shaders;$(ProjectDir)/Common;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -176,6 +192,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir)external\imgui;</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
