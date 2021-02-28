@@ -14,7 +14,6 @@ More general information about this book can be found [here](http://www.d3dcoder
 └───projects            // Projects
     ├───LunaDemoScenes    // Two demo scenes provided in Frank D. Luna's tutorial book
     └───ShadowsScene      // Demo scene to experiment with different real-time shadow techniques
-
 ```
 
 ---
