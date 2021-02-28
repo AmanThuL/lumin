@@ -1,6 +1,4 @@
 //*******************************************************************
-// Copyright Frank Luna (C) 2015 All Rights Reserved.
-//
 // d3dApp.h:
 //
 // The core Direct3D application class code that is used to encapsulate 
@@ -21,11 +19,7 @@
 
 #include "d3dUtil.h"
 #include "GameTimer.h"
-
-// ImGUI libraries
-#include "imgui/imgui.h"
-#include "imgui/imgui_impl_win32.h"
-#include "imgui/imgui_impl_dx12.h"
+#include "gui/GUI.h"
 
 // Link necessary d3d12 libraries.
 #pragma comment(lib, "d3dcompiler.lib")

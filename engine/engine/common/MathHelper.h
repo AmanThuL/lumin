@@ -1,6 +1,4 @@
 //*******************************************************************
-// Copyright Frank Luna (C) 2011 All Rights Reserved.
-//
 // MathHelper.h:
 //
 // Helper math class.

@@ -1,6 +1,4 @@
 //*******************************************************************
-// Copyright Frank Luna (C) 2015 All Rights Reserved.
-//
 // d3dUtil.h:
 //
 // General helper code.

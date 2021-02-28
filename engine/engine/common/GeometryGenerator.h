@@ -1,6 +1,4 @@
 //*******************************************************************
-// Copyright Frank Luna (C) 2011 All Rights Reserved.
-//
 // GeometryGenerator.h:
 // 
 // Defines a static class for procedurally generating the geometry of

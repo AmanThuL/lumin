@@ -1,5 +1,5 @@
 //*******************************************************************
-// LandAndWavesApp.cpp by Frank Luna (C) 2015 All Rights Reserved.
+// LandAndWavesApp.cpp
 //*******************************************************************
 
 #include "LandAndWavesApp.h"
@@ -26,6 +26,9 @@ LandAndWavesApp::LandAndWavesApp(HINSTANCE hInstance)
 // ------------------------------------------------------------------
 LandAndWavesApp::~LandAndWavesApp()
 {
+    // Shut down GUI
+    GUI::ShutDown();
+
 	if (md3dDevice != nullptr)
 		FlushCommandQueue();
 }
@@ -49,6 +52,9 @@ bool LandAndWavesApp::Initialize()
     mCamera.SetPosition(mDefaultCamPos);
 
     mWaves = std::make_unique<Waves>(128, 128, 1.0f, 0.03f, 4.0f, 0.2f);
+
+    // Initialize GUI
+    GUI::Initialize(md3dDevice.Get());
 
     LoadTextures();
     BuildRootSignature();
@@ -132,6 +138,9 @@ void LandAndWavesApp::Update(const GameTimer& gt)
 // ------------------------------------------------------------------
 void LandAndWavesApp::Draw(const GameTimer& gt)
 {
+    // Start GUI frame
+    GUI::StartFrame();
+
     auto cmdListAlloc = mCurrFrameResource->CmdListAlloc;
 
     // Reuse the memory associated with command recording. We can only reset 
@@ -164,6 +173,9 @@ void LandAndWavesApp::Draw(const GameTimer& gt)
 
     // Specify the buffers we are going to render to.
     mCommandList->OMSetRenderTargets(1, &CurrentBackBufferView(), true, &DepthStencilView());
+
+    // Render GUI
+    GUI::RenderFrame(mCommandList.Get());
 
     // Set the descriptor heaps to the command list.
     ID3D12DescriptorHeap* descriptorHeaps[] = { mSrvDescriptorHeap.Get() };

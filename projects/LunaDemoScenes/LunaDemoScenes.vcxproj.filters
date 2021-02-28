@@ -13,14 +13,8 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="LandAndWaves Demo Scene">
-      <UniqueIdentifier>{354aa699-a060-4832-9fa0-6e7cffb9458d}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Shaders">
       <UniqueIdentifier>{e3ac05f4-2cbe-4532-8b27-bd286afdeabc}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Shapes Demo Scene">
-      <UniqueIdentifier>{b359cdd5-bef0-41bc-bab6-7966fa6f8a34}</UniqueIdentifier>
     </Filter>
     <Filter Include="Header Files\Common">
       <UniqueIdentifier>{3ac83ba1-ee77-4d8c-bc42-f5eb612502c3}</UniqueIdentifier>
@@ -28,16 +22,37 @@
     <Filter Include="Source Files\Common">
       <UniqueIdentifier>{4dba694c-519f-4345-923a-1f9e1f11ca8d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Demo Scenes">
+      <UniqueIdentifier>{86b2c955-9122-4b80-bf2a-2f949c3dabce}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Demo Scenes\Shapes Demo Scene">
+      <UniqueIdentifier>{b359cdd5-bef0-41bc-bab6-7966fa6f8a34}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Demo Scenes\LandAndWaves Demo Scene">
+      <UniqueIdentifier>{354aa699-a060-4832-9fa0-6e7cffb9458d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\GUI">
+      <UniqueIdentifier>{64f4cbde-ec05-4630-a842-803f67b67c8c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\GUI">
+      <UniqueIdentifier>{138894d3-ca12-46e9-8058-f6f5569ce1ff}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="External">
+      <UniqueIdentifier>{7b0478a3-0461-4607-92ff-cd629feab562}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="External\imgui">
+      <UniqueIdentifier>{246d3463-5cc3-46a7-9567-09b63755b5ee}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\LandAndWavesApp.cpp">
-      <Filter>LandAndWaves Demo Scene</Filter>
+      <Filter>Demo Scenes\LandAndWaves Demo Scene</Filter>
     </ClCompile>
     <ClCompile Include="src\Waves.cpp">
-      <Filter>LandAndWaves Demo Scene</Filter>
+      <Filter>Demo Scenes\LandAndWaves Demo Scene</Filter>
     </ClCompile>
     <ClCompile Include="src\ShapesApp.cpp">
-      <Filter>Shapes Demo Scene</Filter>
+      <Filter>Demo Scenes\Shapes Demo Scene</Filter>
     </ClCompile>
     <ClCompile Include="..\..\engine\engine\common\MathHelper.cpp">
       <Filter>Source Files\Common</Filter>
@@ -66,16 +81,37 @@
     <ClCompile Include="..\..\engine\engine\Main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\engine\engine\gui\GUI.cpp">
+      <Filter>Source Files\GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\engine\external\imgui\imgui.cpp">
+      <Filter>External\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\engine\external\imgui\imgui_draw.cpp">
+      <Filter>External\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\engine\external\imgui\imgui_impl_dx12.cpp">
+      <Filter>External\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\engine\external\imgui\imgui_impl_win32.cpp">
+      <Filter>External\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\engine\external\imgui\imgui_tables.cpp">
+      <Filter>External\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\engine\external\imgui\imgui_widgets.cpp">
+      <Filter>External\imgui</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\LandAndWavesApp.h">
-      <Filter>LandAndWaves Demo Scene</Filter>
+      <Filter>Demo Scenes\LandAndWaves Demo Scene</Filter>
     </ClInclude>
     <ClInclude Include="src\Waves.h">
-      <Filter>LandAndWaves Demo Scene</Filter>
+      <Filter>Demo Scenes\LandAndWaves Demo Scene</Filter>
     </ClInclude>
     <ClInclude Include="src\ShapesApp.h">
-      <Filter>Shapes Demo Scene</Filter>
+      <Filter>Demo Scenes\Shapes Demo Scene</Filter>
     </ClInclude>
     <ClInclude Include="..\..\engine\engine\common\Camera.h">
       <Filter>Header Files\Common</Filter>
@@ -109,6 +145,33 @@
     </ClInclude>
     <ClInclude Include="..\..\engine\engine\RenderItem.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\engine\engine\gui\GUI.h">
+      <Filter>Header Files\GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\engine\external\imgui\imconfig.h">
+      <Filter>External\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\engine\external\imgui\imgui.h">
+      <Filter>External\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\engine\external\imgui\imgui_impl_dx12.h">
+      <Filter>External\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\engine\external\imgui\imgui_impl_win32.h">
+      <Filter>External\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\engine\external\imgui\imgui_internal.h">
+      <Filter>External\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\engine\external\imgui\imstb_rectpack.h">
+      <Filter>External\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\engine\external\imgui\imstb_textedit.h">
+      <Filter>External\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\engine\external\imgui\imstb_truetype.h">
+      <Filter>External\imgui</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

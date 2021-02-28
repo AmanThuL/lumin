@@ -1,5 +1,5 @@
 //*******************************************************************
-// MathHelper.cpp by Frank Luna (C) 2011 All Rights Reserved.
+// MathHelper.cpp
 //*******************************************************************
 
 #include "MathHelper.h"

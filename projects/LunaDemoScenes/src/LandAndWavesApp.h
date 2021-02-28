@@ -1,6 +1,4 @@
 //*******************************************************************
-// Copyright Frank Luna (C) 2015 All Rights Reserved.
-//
 // LandAndWaves.h:
 //
 // - Constructs a triangle grid mesh procedurally and offsets the
