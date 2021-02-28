@@ -88,7 +88,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)engine\external\;$(SolutionDir)engine\engine\;$(ProjectDir)src\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)engine\vendor\;$(SolutionDir)engine\engine\;$(ProjectDir)src\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -104,7 +104,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)engine\external\;$(SolutionDir)engine\engine\;$(ProjectDir)src\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)engine\vendor\;$(SolutionDir)engine\engine\;$(ProjectDir)src\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -121,7 +121,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SolutionDir)engine\external\;$(SolutionDir)engine\engine\;$(ProjectDir)src\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)engine\vendor\;$(SolutionDir)engine\engine\;$(ProjectDir)src\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -139,7 +139,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(SolutionDir)engine\external\;$(SolutionDir)engine\engine\;$(ProjectDir)src\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)engine\vendor\;$(SolutionDir)engine\engine\;$(ProjectDir)src\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -161,12 +161,6 @@
     <ClCompile Include="..\..\engine\engine\FrameResource.cpp" />
     <ClCompile Include="..\..\engine\engine\gui\GUI.cpp" />
     <ClCompile Include="..\..\engine\engine\Main.cpp" />
-    <ClCompile Include="..\..\engine\external\imgui\imgui.cpp" />
-    <ClCompile Include="..\..\engine\external\imgui\imgui_draw.cpp" />
-    <ClCompile Include="..\..\engine\external\imgui\imgui_impl_dx12.cpp" />
-    <ClCompile Include="..\..\engine\external\imgui\imgui_impl_win32.cpp" />
-    <ClCompile Include="..\..\engine\external\imgui\imgui_tables.cpp" />
-    <ClCompile Include="..\..\engine\external\imgui\imgui_widgets.cpp" />
     <ClCompile Include="src\LandAndWavesApp.cpp" />
     <ClCompile Include="src\ShapesApp.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
@@ -189,14 +183,6 @@
     <ClInclude Include="..\..\engine\engine\FrameResource.h" />
     <ClInclude Include="..\..\engine\engine\gui\GUI.h" />
     <ClInclude Include="..\..\engine\engine\RenderItem.h" />
-    <ClInclude Include="..\..\engine\external\imgui\imconfig.h" />
-    <ClInclude Include="..\..\engine\external\imgui\imgui.h" />
-    <ClInclude Include="..\..\engine\external\imgui\imgui_impl_dx12.h" />
-    <ClInclude Include="..\..\engine\external\imgui\imgui_impl_win32.h" />
-    <ClInclude Include="..\..\engine\external\imgui\imgui_internal.h" />
-    <ClInclude Include="..\..\engine\external\imgui\imstb_rectpack.h" />
-    <ClInclude Include="..\..\engine\external\imgui\imstb_textedit.h" />
-    <ClInclude Include="..\..\engine\external\imgui\imstb_truetype.h" />
     <ClInclude Include="src\LandAndWavesApp.h" />
     <ClInclude Include="src\ShapesApp.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>

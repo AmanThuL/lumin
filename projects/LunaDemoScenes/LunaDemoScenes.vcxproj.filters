@@ -37,12 +37,6 @@
     <Filter Include="Source Files\GUI">
       <UniqueIdentifier>{138894d3-ca12-46e9-8058-f6f5569ce1ff}</UniqueIdentifier>
     </Filter>
-    <Filter Include="External">
-      <UniqueIdentifier>{7b0478a3-0461-4607-92ff-cd629feab562}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="External\imgui">
-      <UniqueIdentifier>{246d3463-5cc3-46a7-9567-09b63755b5ee}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\LandAndWavesApp.cpp">
@@ -83,24 +77,6 @@
     </ClCompile>
     <ClCompile Include="..\..\engine\engine\gui\GUI.cpp">
       <Filter>Source Files\GUI</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\engine\external\imgui\imgui.cpp">
-      <Filter>External\imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\engine\external\imgui\imgui_draw.cpp">
-      <Filter>External\imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\engine\external\imgui\imgui_impl_dx12.cpp">
-      <Filter>External\imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\engine\external\imgui\imgui_impl_win32.cpp">
-      <Filter>External\imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\engine\external\imgui\imgui_tables.cpp">
-      <Filter>External\imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\engine\external\imgui\imgui_widgets.cpp">
-      <Filter>External\imgui</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -148,30 +124,6 @@
     </ClInclude>
     <ClInclude Include="..\..\engine\engine\gui\GUI.h">
       <Filter>Header Files\GUI</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\engine\external\imgui\imconfig.h">
-      <Filter>External\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\engine\external\imgui\imgui.h">
-      <Filter>External\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\engine\external\imgui\imgui_impl_dx12.h">
-      <Filter>External\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\engine\external\imgui\imgui_impl_win32.h">
-      <Filter>External\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\engine\external\imgui\imgui_internal.h">
-      <Filter>External\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\engine\external\imgui\imstb_rectpack.h">
-      <Filter>External\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\engine\external\imgui\imstb_textedit.h">
-      <Filter>External\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\engine\external\imgui\imstb_truetype.h">
-      <Filter>External\imgui</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
