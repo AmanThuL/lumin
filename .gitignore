@@ -6,6 +6,7 @@
 # Binaries
 **/bin/
 bin-int/
+!vendor/premake/bin/
 
 # User-specific files
 *.rsuser
