@@ -15,8 +15,6 @@
 #include <crtdbg.h>
 #endif
 
-#include <iostream>
-
 #include "d3dUtil.h"
 #include "GameTimer.h"
 #include "gui/GUI.h"

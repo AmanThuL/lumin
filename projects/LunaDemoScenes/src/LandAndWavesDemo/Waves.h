@@ -12,8 +12,7 @@
 #ifndef WAVES_H
 #define WAVES_H
 
-#include <vector>
-#include <DirectXMath.h>
+#include "lmpch.h"
 
 class Waves
 {

@@ -6,9 +6,8 @@
 // class object, initializes it and enters the App loop.
 //*******************************************************************
 
-#include <Windows.h>
-#include "ShapesApp.h"
-#include "LandAndWavesApp.h"
+#include "ShapesDemo/ShapesApp.h"
+#include "LandAndWavesDemo/LandAndWavesApp.h"
 
 // ------------------------------------------------------------------
 // Entry point for a graphical (non-console) Windows application

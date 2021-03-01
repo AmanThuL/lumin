@@ -7,9 +7,9 @@
 
 #pragma once
 
-#include "Common/d3dUtil.h"
-#include "Common/MathHelper.h"
-#include "Common/UploadBuffer.h"
+#include "common/d3dUtil.h"
+#include "common/MathHelper.h"
+#include "common/UploadBuffer.h"
 
 // Stores data that varies per-instance.
 struct InstanceData
@@ -84,7 +84,7 @@ struct Vertex
 struct FrameResource
 {
 public:
-	
+
     // Constructors
     FrameResource(ID3D12Device* device, UINT passCount, UINT maxInstanceCount);
     FrameResource(ID3D12Device* device, UINT passCount, UINT maxInstanceCount, UINT materialCount, UINT waveVertCount = 0);

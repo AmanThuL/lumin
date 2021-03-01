@@ -9,7 +9,7 @@
 #include "common/d3dApp.h"
 
 // ImGUI libraries
-#include "imgui/imgui.h"
+#include "imgui.h"
 
 namespace GUI
 {

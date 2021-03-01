@@ -1,137 +1,174 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Source Files">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    <Filter Include="engine">
+      <UniqueIdentifier>{FBDB78FB-E77D-A3D1-D038-B725BC792A22}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    <Filter Include="engine\engine">
+      <UniqueIdentifier>{4032AB6F-ACF2-26A6-752D-7023E1AC6B82}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Resource Files">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    <Filter Include="engine\engine\common">
+      <UniqueIdentifier>{984B4ABE-84DA-D387-2DF9-E7821967E42D}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Shaders">
-      <UniqueIdentifier>{e3ac05f4-2cbe-4532-8b27-bd286afdeabc}</UniqueIdentifier>
+    <Filter Include="engine\engine\gui">
+      <UniqueIdentifier>{B4DD95DA-20F4-9370-696B-1F92D5C064F8}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\Common">
-      <UniqueIdentifier>{3ac83ba1-ee77-4d8c-bc42-f5eb612502c3}</UniqueIdentifier>
+    <Filter Include="engine\vendor">
+      <UniqueIdentifier>{F8C9B396-648A-2FCD-2DC5-784A994474A9}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\Common">
-      <UniqueIdentifier>{4dba694c-519f-4345-923a-1f9e1f11ca8d}</UniqueIdentifier>
+    <Filter Include="engine\vendor\imgui">
+      <UniqueIdentifier>{62715D12-CED2-3A20-5740-81D2C3A071DF}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Demo Scenes">
-      <UniqueIdentifier>{86b2c955-9122-4b80-bf2a-2f949c3dabce}</UniqueIdentifier>
+    <Filter Include="engine\vendor\imgui\backends">
+      <UniqueIdentifier>{CC99AD2E-B854-9DDA-610C-16254DA6E76A}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Demo Scenes\Shapes Demo Scene">
-      <UniqueIdentifier>{b359cdd5-bef0-41bc-bab6-7966fa6f8a34}</UniqueIdentifier>
+    <Filter Include="src">
+      <UniqueIdentifier>{2DAB880B-99B4-887C-2230-9F7C8E38947C}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Demo Scenes\LandAndWaves Demo Scene">
-      <UniqueIdentifier>{354aa699-a060-4832-9fa0-6e7cffb9458d}</UniqueIdentifier>
+    <Filter Include="src\LandAndWavesDemo">
+      <UniqueIdentifier>{D940FFF3-C5CF-88BD-6EEE-9CB85A5C9963}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\GUI">
-      <UniqueIdentifier>{64f4cbde-ec05-4630-a842-803f67b67c8c}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\GUI">
-      <UniqueIdentifier>{138894d3-ca12-46e9-8058-f6f5569ce1ff}</UniqueIdentifier>
+    <Filter Include="src\ShapesDemo">
+      <UniqueIdentifier>{25BFFC34-118D-F03A-FA20-6161E68DCC9F}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\LandAndWavesApp.cpp">
-      <Filter>Demo Scenes\LandAndWaves Demo Scene</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Waves.cpp">
-      <Filter>Demo Scenes\LandAndWaves Demo Scene</Filter>
-    </ClCompile>
-    <ClCompile Include="src\ShapesApp.cpp">
-      <Filter>Demo Scenes\Shapes Demo Scene</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\engine\engine\common\MathHelper.cpp">
-      <Filter>Source Files\Common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\engine\engine\common\GeometryGenerator.cpp">
-      <Filter>Source Files\Common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\engine\engine\common\GameTimer.cpp">
-      <Filter>Source Files\Common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\engine\engine\common\DDSTextureLoader.cpp">
-      <Filter>Source Files\Common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\engine\engine\common\d3dUtil.cpp">
-      <Filter>Source Files\Common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\engine\engine\common\d3dApp.cpp">
-      <Filter>Source Files\Common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\engine\engine\common\Camera.cpp">
-      <Filter>Source Files\Common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\engine\engine\FrameResource.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\engine\engine\Main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\engine\engine\gui\GUI.cpp">
-      <Filter>Source Files\GUI</Filter>
-    </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="src\LandAndWavesApp.h">
-      <Filter>Demo Scenes\LandAndWaves Demo Scene</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Waves.h">
-      <Filter>Demo Scenes\LandAndWaves Demo Scene</Filter>
-    </ClInclude>
-    <ClInclude Include="src\ShapesApp.h">
-      <Filter>Demo Scenes\Shapes Demo Scene</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\engine\engine\common\Camera.h">
-      <Filter>Header Files\Common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\engine\engine\common\d3dApp.h">
-      <Filter>Header Files\Common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\engine\engine\common\d3dUtil.h">
-      <Filter>Header Files\Common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\engine\engine\common\d3dx12.h">
-      <Filter>Header Files\Common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\engine\engine\common\DDSTextureLoader.h">
-      <Filter>Header Files\Common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\engine\engine\common\GameTimer.h">
-      <Filter>Header Files\Common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\engine\engine\common\GeometryGenerator.h">
-      <Filter>Header Files\Common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\engine\engine\common\MathHelper.h">
-      <Filter>Header Files\Common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\engine\engine\common\UploadBuffer.h">
-      <Filter>Header Files\Common</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\engine\engine\FrameResource.h">
-      <Filter>Header Files</Filter>
+      <Filter>engine\engine</Filter>
     </ClInclude>
     <ClInclude Include="..\..\engine\engine\RenderItem.h">
-      <Filter>Header Files</Filter>
+      <Filter>engine\engine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\engine\engine\common\Camera.h">
+      <Filter>engine\engine\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\engine\engine\common\DDSTextureLoader.h">
+      <Filter>engine\engine\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\engine\engine\common\GameTimer.h">
+      <Filter>engine\engine\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\engine\engine\common\GeometryGenerator.h">
+      <Filter>engine\engine\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\engine\engine\common\MathHelper.h">
+      <Filter>engine\engine\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\engine\engine\common\UploadBuffer.h">
+      <Filter>engine\engine\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\engine\engine\common\d3dApp.h">
+      <Filter>engine\engine\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\engine\engine\common\d3dUtil.h">
+      <Filter>engine\engine\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\engine\engine\common\d3dx12.h">
+      <Filter>engine\engine\common</Filter>
     </ClInclude>
     <ClInclude Include="..\..\engine\engine\gui\GUI.h">
-      <Filter>Header Files\GUI</Filter>
+      <Filter>engine\engine\gui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\engine\vendor\imgui\backends\imgui_impl_dx12.h">
+      <Filter>engine\vendor\imgui\backends</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\engine\vendor\imgui\backends\imgui_impl_win32.h">
+      <Filter>engine\vendor\imgui\backends</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\engine\vendor\imgui\imconfig.h">
+      <Filter>engine\vendor\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\engine\vendor\imgui\imgui.h">
+      <Filter>engine\vendor\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\engine\vendor\imgui\imgui_internal.h">
+      <Filter>engine\vendor\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\engine\vendor\imgui\imstb_rectpack.h">
+      <Filter>engine\vendor\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\engine\vendor\imgui\imstb_textedit.h">
+      <Filter>engine\vendor\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\engine\vendor\imgui\imstb_truetype.h">
+      <Filter>engine\vendor\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="src\LandAndWavesDemo\LandAndWavesApp.h">
+      <Filter>src\LandAndWavesDemo</Filter>
+    </ClInclude>
+    <ClInclude Include="src\LandAndWavesDemo\Waves.h">
+      <Filter>src\LandAndWavesDemo</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ShapesDemo\ShapesApp.h">
+      <Filter>src\ShapesDemo</Filter>
+    </ClInclude>
+    <ClInclude Include="src\lmpch.h">
+      <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="..\..\engine\engine\shaders\Default.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
-    <FxCompile Include="..\..\engine\engine\shaders\LightingUtil.hlsl">
-      <Filter>Shaders</Filter>
-    </FxCompile>
+    <ClCompile Include="..\..\engine\engine\FrameResource.cpp">
+      <Filter>engine\engine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\engine\engine\common\Camera.cpp">
+      <Filter>engine\engine\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\engine\engine\common\DDSTextureLoader.cpp">
+      <Filter>engine\engine\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\engine\engine\common\GameTimer.cpp">
+      <Filter>engine\engine\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\engine\engine\common\GeometryGenerator.cpp">
+      <Filter>engine\engine\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\engine\engine\common\MathHelper.cpp">
+      <Filter>engine\engine\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\engine\engine\common\d3dApp.cpp">
+      <Filter>engine\engine\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\engine\engine\common\d3dUtil.cpp">
+      <Filter>engine\engine\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\engine\engine\gui\GUI.cpp">
+      <Filter>engine\engine\gui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\engine\vendor\imgui\backends\imgui_impl_dx12.cpp">
+      <Filter>engine\vendor\imgui\backends</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\engine\vendor\imgui\backends\imgui_impl_win32.cpp">
+      <Filter>engine\vendor\imgui\backends</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\engine\vendor\imgui\imgui.cpp">
+      <Filter>engine\vendor\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\engine\vendor\imgui\imgui_demo.cpp">
+      <Filter>engine\vendor\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\engine\vendor\imgui\imgui_draw.cpp">
+      <Filter>engine\vendor\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\engine\vendor\imgui\imgui_tables.cpp">
+      <Filter>engine\vendor\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\engine\vendor\imgui\imgui_widgets.cpp">
+      <Filter>engine\vendor\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="src\LandAndWavesDemo\LandAndWavesApp.cpp">
+      <Filter>src\LandAndWavesDemo</Filter>
+    </ClCompile>
+    <ClCompile Include="src\LandAndWavesDemo\Waves.cpp">
+      <Filter>src\LandAndWavesDemo</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Main.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ShapesDemo\ShapesApp.cpp">
+      <Filter>src\ShapesDemo</Filter>
+    </ClCompile>
+    <ClCompile Include="src\lmpch.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
