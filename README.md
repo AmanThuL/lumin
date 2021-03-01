@@ -1,5 +1,5 @@
 # Lumin
-Lumin is an early-stage C++ based renderer with DirectX 12 API. The basic framework is heavily based on Frank D. Luna's DirectX 12 book. For more details, please refer to the ``References`` section.
+Lumin is an early-stage C++ based renderer for Windows built with DirectX 12 API. The basic framework is heavily based on Frank D. Luna's DirectX 12 book. For more details, please refer to the ``References`` section.
 
 ## Getting Started
 
