@@ -3,11 +3,6 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 
-# Binaries
-**/bin/
-bin-int/
-!vendor/premake/bin/
-
 # User-specific files
 *.rsuser
 *.suo
@@ -353,3 +348,7 @@ MigrationBackup/
 
 # Ionide (cross platform F# VS Code tools) working folder
 .ionide/
+
+# Binaries
+bin-int/
+!vendor/premake/bin/
