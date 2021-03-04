@@ -14,6 +14,12 @@ project (_PROJECT_NAME_1)
 		 "%{IncludeDir.Engine}/**.h", "%{IncludeDir.Engine}/**.cpp",
 		 "%{IncludeDir.ImGui}/**.h", "%{IncludeDir.ImGui}/**.cpp",
 	}
+
+	excludes 
+	{ 
+		"src/ShapesDemo/ShapesApp.cpp", 
+		"src/ShapesDemo/ShapesApp.h" 
+	}
 	
 	includedirs
     {
@@ -28,9 +34,9 @@ project (_PROJECT_NAME_1)
 		"d3d12", 
 		"dxgi",
 	}
-	
-	flags { "NoPCH" }
 
+	forceincludes { "lmpch.h" }
+	
 	filter "system:windows"
 		systemversion "latest"
 		cppdialect "C++17"

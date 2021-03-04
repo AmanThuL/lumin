@@ -28,9 +28,6 @@
     <Filter Include="src\LandAndWavesDemo">
       <UniqueIdentifier>{D940FFF3-C5CF-88BD-6EEE-9CB85A5C9963}</UniqueIdentifier>
     </Filter>
-    <Filter Include="src\ShapesDemo">
-      <UniqueIdentifier>{25BFFC34-118D-F03A-FA20-6161E68DCC9F}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\engine\engine\FrameResource.h">
@@ -99,9 +96,6 @@
     <ClInclude Include="src\LandAndWavesDemo\Waves.h">
       <Filter>src\LandAndWavesDemo</Filter>
     </ClInclude>
-    <ClInclude Include="src\ShapesDemo\ShapesApp.h">
-      <Filter>src\ShapesDemo</Filter>
-    </ClInclude>
     <ClInclude Include="src\lmpch.h">
       <Filter>src</Filter>
     </ClInclude>
@@ -163,9 +157,6 @@
     </ClCompile>
     <ClCompile Include="src\Main.cpp">
       <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="src\ShapesDemo\ShapesApp.cpp">
-      <Filter>src\ShapesDemo</Filter>
     </ClCompile>
     <ClCompile Include="src\lmpch.cpp">
       <Filter>src</Filter>
