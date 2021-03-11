@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "common/d3dUtil.h"
+#include "common/DXUtil.h"
 #include "common/MathHelper.h"
 #include "common/UploadBuffer.h"
 

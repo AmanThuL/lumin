@@ -2,15 +2,15 @@
 // LandAndWavesApp.cpp
 //*******************************************************************
 
-#include "LandAndWavesApp.h"
+#include "Game.h"
 
 using Microsoft::WRL::ComPtr;
 using namespace DirectX;
 using namespace DirectX::PackedVector;
 using namespace std;
 
-LandAndWavesApp::LandAndWavesApp(HINSTANCE hInstance)
-	: D3DApp(hInstance)	 // The application's handle
+Game::Game(HINSTANCE hInstance)
+	: DXCore(hInstance)	 // The application's handle
 {
 #if defined(DEBUG) || defined(_DEBUG)
 	// Do we want a console window?  Probably only in debug mode
@@ -24,11 +24,8 @@ LandAndWavesApp::LandAndWavesApp(HINSTANCE hInstance)
 //  - Release all DirectX objects created here
 //  - Delete any objects to prevent memory leaks
 // ------------------------------------------------------------------
-LandAndWavesApp::~LandAndWavesApp()
+Game::~Game()
 {
-    // Shut down GUI
-    GUI::ShutDown();
-
 	if (md3dDevice != nullptr)
 		FlushCommandQueue();
 }
@@ -37,24 +34,17 @@ LandAndWavesApp::~LandAndWavesApp()
 // Called once per program, after DirectX and the window are 
 // initialized but before the game loop.
 // ------------------------------------------------------------------
-bool LandAndWavesApp::Initialize()
+bool Game::Initialize()
 {
-    if (!D3DApp::Initialize())
+    if (!DXCore::Initialize())
         return false;
 
     // Reset the command list to prep for initialization commands.
     ThrowIfFailed(mCommandList->Reset(mDirectCmdListAlloc.Get(), nullptr));
 
-    // Get the increment size of a descriptor in this heap type. This is 
-    // hardware specific, so we have to query this information.
-    mCbvSrvDescriptorSize = md3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-
     mCamera.SetPosition(mDefaultCamPos);
 
     mWaves = std::make_unique<Waves>(128, 128, 1.0f, 0.03f, 4.0f, 0.2f);
-
-    // Initialize GUI
-    GUI::Initialize(md3dDevice.Get());
 
     LoadTextures();
     BuildRootSignature();
@@ -62,8 +52,8 @@ bool LandAndWavesApp::Initialize()
     BuildShadersAndInputLayout();
 
     // Build scene implicit geometries
-    BuildLandGeometry();
-    BuildWavesGeometry();
+    //BuildLandGeometry();
+    //BuildWavesGeometry();
     BuildBoxGeometry();
 
     BuildMaterials();
@@ -86,12 +76,14 @@ bool LandAndWavesApp::Initialize()
 // Handle resizing DirectX "stuff" to match the new window size. For 
 // instance, updating our projection matrix's aspect ratio.
 // ------------------------------------------------------------------
-void LandAndWavesApp::OnResize()
+void Game::OnResize()
 {
-    D3DApp::OnResize();
+    DXCore::OnResize();
 
     // When the window is resized, delegate the work to the Camera class.
     mCamera.SetLens(0.25f * MathHelper::Pi, AspectRatio(), 1.0f, 1000.0f);
+
+    BoundingFrustum::CreateFromMatrix(mCamFrustum, mCamera.GetProj());
 }
 
 // ------------------------------------------------------------------
@@ -100,7 +92,7 @@ void LandAndWavesApp::OnResize()
 // E.g. Perform animations, move the camera, do collision detection, 
 // check for user input, and etc.).
 // ------------------------------------------------------------------
-void LandAndWavesApp::Update(const GameTimer& gt)
+void Game::Update(const GameTimer& gt)
 {
     OnKeyboardInput(gt);
 
@@ -124,7 +116,7 @@ void LandAndWavesApp::Update(const GameTimer& gt)
     UpdateMaterialBuffer(gt);
     UpdateMainPassCB(gt);
 
-    UpdateWaves(gt);
+    //UpdateWaves(gt);
 
     //cout << "Current Camera Position: " 
     //     << mCamera.GetPosition3f().x << " " 
@@ -136,9 +128,8 @@ void LandAndWavesApp::Update(const GameTimer& gt)
 // Invoked every frame and is where rendering commands are issued to 
 // draw the current frame to the back buffer.
 // ------------------------------------------------------------------
-void LandAndWavesApp::Draw(const GameTimer& gt)
+void Game::Draw(const GameTimer& gt)
 {
-    // Start GUI frame
     GUI::StartFrame();
 
     auto cmdListAlloc = mCurrFrameResource->CmdListAlloc;
@@ -174,11 +165,8 @@ void LandAndWavesApp::Draw(const GameTimer& gt)
     // Specify the buffers we are going to render to.
     mCommandList->OMSetRenderTargets(1, &CurrentBackBufferView(), true, &DepthStencilView());
 
-    // Render GUI
-    GUI::RenderFrame(mCommandList.Get());
-
     // Set the descriptor heaps to the command list.
-    ID3D12DescriptorHeap* descriptorHeaps[] = { mSrvDescriptorHeap.Get() };
+    ID3D12DescriptorHeap* descriptorHeaps[] = { mCbvSrvUavDescriptorHeap->GetHeapPtr() };
     mCommandList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
 
     // ======================== Root Signature Update =========================
@@ -197,8 +185,10 @@ void LandAndWavesApp::Draw(const GameTimer& gt)
     // Bind all the textures used in this scene. Observe that we only have to
     // specify the first descriptor in the table. The root signature knows how
     // many descriptors are expected in the table.
-    mCommandList->SetGraphicsRootDescriptorTable(3, mSrvDescriptorHeap->GetGPUDescriptorHandleForHeapStart());
+    mCommandList->SetGraphicsRootDescriptorTable(3, mCbvSrvUavDescriptorHeap->GetGPUHandle(0));
     // ========================================================================
+
+    GUI::RenderFrame(mCommandList.Get(), mCbvSrvUavDescriptorHeap.get());
 
     // Draw render items and set pipeline states
     DrawRenderItems(mCommandList.Get(), mRitemLayer[(int)RenderLayer::Opaque]);
@@ -208,7 +198,6 @@ void LandAndWavesApp::Draw(const GameTimer& gt)
 
     mCommandList->SetPipelineState(mPSOs["transparent"].Get());
     DrawRenderItems(mCommandList.Get(), mRitemLayer[(int)RenderLayer::Transparent]);
-
 
     // Indicate a state transition on the resource usage.
     mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
@@ -245,7 +234,7 @@ void LandAndWavesApp::Draw(const GameTimer& gt)
 // ------------------------------------------------------------------
 // Check for keyboard input per frame.
 // ------------------------------------------------------------------
-void LandAndWavesApp::OnKeyboardInput(const GameTimer& gt)
+void Game::OnKeyboardInput(const GameTimer& gt)
 {
     // Handle keyboard input to move the camera
     const float dt = gt.DeltaTime();
@@ -277,7 +266,7 @@ void LandAndWavesApp::OnKeyboardInput(const GameTimer& gt)
 // Translate the texture coordinates in the texture plane as a function
 // of time.
 // ------------------------------------------------------------------
-void LandAndWavesApp::AnimateMaterials(const GameTimer& gt)
+void Game::AnimateMaterials(const GameTimer& gt)
 {
     // Scroll the water material texture coordinates.
     auto waterMat = mMaterials["water"].get();
@@ -304,7 +293,7 @@ void LandAndWavesApp::AnimateMaterials(const GameTimer& gt)
 // ------------------------------------------------------------------
 // Update the per instance data.
 // ------------------------------------------------------------------
-void LandAndWavesApp::UpdateInstanceData(const GameTimer& gt)
+void Game::UpdateInstanceData(const GameTimer& gt)
 {
     XMMATRIX view = mCamera.GetView();
     XMMATRIX invView = XMMatrixInverse(&XMMatrixDeterminant(view), view);
@@ -321,16 +310,36 @@ void LandAndWavesApp::UpdateInstanceData(const GameTimer& gt)
             XMMATRIX world = XMLoadFloat4x4(&instanceData[i].World);
             XMMATRIX texTransform = XMLoadFloat4x4(&instanceData[i].TexTransform);
 
-            InstanceData data;
-            XMStoreFloat4x4(&data.World, XMMatrixTranspose(world));
-            XMStoreFloat4x4(&data.TexTransform, XMMatrixTranspose(texTransform));
-            data.MaterialIndex = instanceData[i].MaterialIndex;
+            XMMATRIX invWorld = XMMatrixInverse(&XMMatrixDeterminant(world), world);
 
-            // Write the instance data to structured buffer for the visible objects.
-            currInstanceBuffer->CopyData(visibleInstanceCount++, data);
+            // View space to the object's local space.
+            XMMATRIX viewToLocal = XMMatrixMultiply(invView, invWorld);
+
+            // Transform the camera frustum from view space to the object's local space.
+            BoundingFrustum localSpaceFrustum;
+            mCamFrustum.Transform(localSpaceFrustum, viewToLocal);
+
+            // Perform the box/frustum intersection test in local space.
+            if ((localSpaceFrustum.Contains(e->Bounds) != DirectX::DISJOINT) || (mFrustumCullingEnabled == false))
+            {
+                InstanceData data;
+                XMStoreFloat4x4(&data.World, XMMatrixTranspose(world));
+                XMStoreFloat4x4(&data.TexTransform, XMMatrixTranspose(texTransform));
+                data.MaterialIndex = instanceData[i].MaterialIndex;
+
+                // Write the instance data to structured buffer for the visible objects.
+                currInstanceBuffer->CopyData(visibleInstanceCount++, data);
+            }
         }
 
         e->InstanceCount = visibleInstanceCount;
+
+        std::wostringstream outs;
+        outs.precision(6);
+        outs << L"Instancing and Culling Demo" <<
+            L"    " << e->InstanceCount <<
+            L" objects visible out of " << e->Instances.size();
+        mMainWndCaption = outs.str();
     }
 }
 
@@ -339,7 +348,7 @@ void LandAndWavesApp::UpdateInstanceData(const GameTimer& gt)
 // whenever it is changed ("dirty) so that the GPU material constant
 // buffer data is kept up to date with the system memory material data.
 // ------------------------------------------------------------------
-void LandAndWavesApp::UpdateMaterialBuffer(const GameTimer& gt)
+void Game::UpdateMaterialBuffer(const GameTimer& gt)
 {
     auto currMaterialBuffer = mCurrFrameResource->MaterialBuffer.get();
     for (auto& e : mMaterials)
@@ -369,7 +378,7 @@ void LandAndWavesApp::UpdateMaterialBuffer(const GameTimer& gt)
 // ------------------------------------------------------------------
 // Update the per pass constant buffer only once per rendering pass.
 // ------------------------------------------------------------------
-void LandAndWavesApp::UpdateMainPassCB(const GameTimer& gt)
+void Game::UpdateMainPassCB(const GameTimer& gt)
 {
     XMMATRIX view = mCamera.GetView();
     XMMATRIX proj = mCamera.GetProj();
@@ -413,7 +422,7 @@ void LandAndWavesApp::UpdateMainPassCB(const GameTimer& gt)
 // ------------------------------------------------------------------
 // Run the wave simulation and update the vertex buffer.
 // ------------------------------------------------------------------
-void LandAndWavesApp::UpdateWaves(const GameTimer& gt)
+void Game::UpdateWaves(const GameTimer& gt)
 {
     // Every quarter second, generate a random wave.
     static float t_base = 0.0f;
@@ -462,7 +471,7 @@ void LandAndWavesApp::UpdateWaves(const GameTimer& gt)
 // Create the texture from file and store all of the unique textures 
 // in an unordered map at initialization time.
 // ------------------------------------------------------------------
-void LandAndWavesApp::LoadTextures()
+void Game::LoadTextures()
 {
     auto bricksTex = std::make_unique<Texture>();
     bricksTex->Name = "bricksTex";
@@ -530,7 +539,7 @@ void LandAndWavesApp::LoadTextures()
 // executed and where those resources get mapped to shader input 
 // registers.
 // ------------------------------------------------------------------
-void LandAndWavesApp::BuildRootSignature()
+void Game::BuildRootSignature()
 {
     // - Shader programs typically require resources as input (constant 
     // buffers, textures, samplers). The root signature defines what resources 
@@ -546,7 +555,7 @@ void LandAndWavesApp::BuildRootSignature()
     //		+ Root constant
 
     CD3DX12_DESCRIPTOR_RANGE texTable;
-    texTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 7, 0, 0);
+    texTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 10, 0, 0);
 
     // Root parameter can be a table, root descriptor or root constants.
     CD3DX12_ROOT_PARAMETER slotRootParameter[4];
@@ -590,22 +599,17 @@ void LandAndWavesApp::BuildRootSignature()
 // ------------------------------------------------------------------
 // Create the descriptor heaps and populate them with actual descriptors.
 // ------------------------------------------------------------------
-void LandAndWavesApp::BuildDescriptorHeaps()
+void Game::BuildDescriptorHeaps()
 {
     //
     // Create the SRV heap.
     //
-    D3D12_DESCRIPTOR_HEAP_DESC srvHeapDesc = {};
-    srvHeapDesc.NumDescriptors = 7;
-    srvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-    srvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-    ThrowIfFailed(md3dDevice->CreateDescriptorHeap(&srvHeapDesc, IID_PPV_ARGS(&mSrvDescriptorHeap)));
+    mCbvSrvUavDescriptorHeap = make_unique<DescriptorHeapWrapper>();
+    mCbvSrvUavDescriptorHeap->Create(md3dDevice, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 10, true);
 
     //
     // Fill out the heap with actual descriptors.
     //
-    CD3DX12_CPU_DESCRIPTOR_HANDLE hDescriptor(mSrvDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
-
     auto bricksTex = mTextures["bricksTex"]->Resource;
     auto waterTex = mTextures["waterTex"]->Resource;
     auto crate01Tex = mTextures["crate01Tex"]->Resource;
@@ -614,58 +618,15 @@ void LandAndWavesApp::BuildDescriptorHeaps()
     auto grassTex = mTextures["grassTex"]->Resource;
     auto whiteTex = mTextures["whiteTex"]->Resource;
 
-    D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
-    srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+    mCbvSrvUavDescriptorHeap->CreateSrvDescriptor(md3dDevice, bricksTex.Get());
+    mCbvSrvUavDescriptorHeap->CreateSrvDescriptor(md3dDevice, waterTex.Get());
+    mCbvSrvUavDescriptorHeap->CreateSrvDescriptor(md3dDevice, crate01Tex.Get());
+    mCbvSrvUavDescriptorHeap->CreateSrvDescriptor(md3dDevice, crate02Tex.Get());
+    mCbvSrvUavDescriptorHeap->CreateSrvDescriptor(md3dDevice, iceTex.Get());
+    mCbvSrvUavDescriptorHeap->CreateSrvDescriptor(md3dDevice, grassTex.Get());
+    mCbvSrvUavDescriptorHeap->CreateSrvDescriptor(md3dDevice, whiteTex.Get());
 
-    // Descriptor for bricksTex
-    srvDesc.Format = bricksTex->GetDesc().Format;
-    srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-    srvDesc.Texture2D.MostDetailedMip = 0;
-    srvDesc.Texture2D.MipLevels = bricksTex->GetDesc().MipLevels;
-    srvDesc.Texture2D.ResourceMinLODClamp = 0.0f;
-    md3dDevice->CreateShaderResourceView(bricksTex.Get(), &srvDesc, hDescriptor);
-
-    // next descriptor
-    hDescriptor.Offset(1, mCbvSrvDescriptorSize);
-
-    srvDesc.Format = waterTex->GetDesc().Format;
-    srvDesc.Texture2D.MipLevels = waterTex->GetDesc().MipLevels;
-    md3dDevice->CreateShaderResourceView(waterTex.Get(), &srvDesc, hDescriptor);
-
-    // next descriptor
-    hDescriptor.Offset(1, mCbvSrvDescriptorSize);
-
-    srvDesc.Format = crate01Tex->GetDesc().Format;
-    srvDesc.Texture2D.MipLevels = crate01Tex->GetDesc().MipLevels;
-    md3dDevice->CreateShaderResourceView(crate01Tex.Get(), &srvDesc, hDescriptor);
-
-    // next descriptor
-    hDescriptor.Offset(1, mCbvSrvDescriptorSize);
-
-    srvDesc.Format = crate02Tex->GetDesc().Format;
-    srvDesc.Texture2D.MipLevels = crate02Tex->GetDesc().MipLevels;
-    md3dDevice->CreateShaderResourceView(crate02Tex.Get(), &srvDesc, hDescriptor);
-
-    // next descriptor
-    hDescriptor.Offset(1, mCbvSrvDescriptorSize);
-
-    srvDesc.Format = iceTex->GetDesc().Format;
-    srvDesc.Texture2D.MipLevels = iceTex->GetDesc().MipLevels;
-    md3dDevice->CreateShaderResourceView(iceTex.Get(), &srvDesc, hDescriptor);
-
-    // next descriptor
-    hDescriptor.Offset(1, mCbvSrvDescriptorSize);
-
-    srvDesc.Format = grassTex->GetDesc().Format;
-    srvDesc.Texture2D.MipLevels = grassTex->GetDesc().MipLevels;
-    md3dDevice->CreateShaderResourceView(grassTex.Get(), &srvDesc, hDescriptor);
-
-    // next descriptor
-    hDescriptor.Offset(1, mCbvSrvDescriptorSize);
-
-    srvDesc.Format = whiteTex->GetDesc().Format;
-    srvDesc.Texture2D.MipLevels = whiteTex->GetDesc().MipLevels;
-    md3dDevice->CreateShaderResourceView(whiteTex.Get(), &srvDesc, hDescriptor);
+    GUI::SetupRenderer(md3dDevice.Get(), mCbvSrvUavDescriptorHeap.get());
 }
 
 // ------------------------------------------------------------------
@@ -673,7 +634,7 @@ void LandAndWavesApp::BuildDescriptorHeaps()
 // with a description of the vertex structure in the form of an input 
 // layout description.
 // ------------------------------------------------------------------
-void LandAndWavesApp::BuildShadersAndInputLayout()
+void Game::BuildShadersAndInputLayout()
 {
     const D3D_SHADER_MACRO defines[] =
     {
@@ -688,9 +649,9 @@ void LandAndWavesApp::BuildShadersAndInputLayout()
         NULL, NULL
     };
 
-    mShaders["standardVS"] = d3dUtil::CompileShader(L"..\\..\\engine\\engine\\shaders\\Default.hlsl", nullptr, "VS", "vs_5_1");
-    mShaders["opaquePS"] = d3dUtil::CompileShader(L"..\\..\\engine\\engine\\shaders\\Default.hlsl", defines, "PS", "ps_5_1");
-    mShaders["alphaTestedPS"] = d3dUtil::CompileShader(L"..\\..\\engine\\engine\\shaders\\Default.hlsl", alphaTestDefines, "PS", "ps_5_1");
+    mShaders["standardVS"] = DXUtil::CompileShader(L"..\\..\\engine\\engine\\shaders\\Default.hlsl", nullptr, "VS", "vs_5_1");
+    mShaders["opaquePS"] = DXUtil::CompileShader(L"..\\..\\engine\\engine\\shaders\\Default.hlsl", defines, "PS", "ps_5_1");
+    mShaders["alphaTestedPS"] = DXUtil::CompileShader(L"..\\..\\engine\\engine\\shaders\\Default.hlsl", alphaTestDefines, "PS", "ps_5_1");
 
     mInputLayout =
     {
@@ -705,7 +666,7 @@ void LandAndWavesApp::BuildShadersAndInputLayout()
 // grid into a surface representing hills. Generate a color for each
 // vertex based on the vertex altitute (y-coordinate).
 // ------------------------------------------------------------------
-void LandAndWavesApp::BuildLandGeometry()
+void Game::BuildLandGeometry()
 {
     GeometryGenerator geoGen;
     GeometryGenerator::MeshData grid = geoGen.CreateGrid(160.0f, 160.0f, 50, 50);
@@ -741,10 +702,10 @@ void LandAndWavesApp::BuildLandGeometry()
     ThrowIfFailed(D3DCreateBlob(ibByteSize, &geo->IndexBufferCPU));
     CopyMemory(geo->IndexBufferCPU->GetBufferPointer(), indices.data(), ibByteSize);
 
-    geo->VertexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(),
+    geo->VertexBufferGPU = DXUtil::CreateDefaultBuffer(md3dDevice.Get(),
         mCommandList.Get(), vertices.data(), vbByteSize, geo->VertexBufferUploader);
 
-    geo->IndexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(),
+    geo->IndexBufferGPU = DXUtil::CreateDefaultBuffer(md3dDevice.Get(),
         mCommandList.Get(), indices.data(), ibByteSize, geo->IndexBufferUploader);
 
     geo->VertexByteStride = sizeof(Vertex);
@@ -766,7 +727,7 @@ void LandAndWavesApp::BuildLandGeometry()
 // Build waves geometry buffers, caches the necessary drawing quantities,
 // and draws the objects.
 // ------------------------------------------------------------------
-void LandAndWavesApp::BuildWavesGeometry()
+void Game::BuildWavesGeometry()
 {
     std::vector<std::uint16_t> indices(3 * mWaves->TriangleCount()); // 3 indices per face
     assert(mWaves->VertexCount() < 0x0000ffff);
@@ -804,7 +765,7 @@ void LandAndWavesApp::BuildWavesGeometry()
     ThrowIfFailed(D3DCreateBlob(ibByteSize, &geo->IndexBufferCPU));
     CopyMemory(geo->IndexBufferCPU->GetBufferPointer(), indices.data(), ibByteSize);
 
-    geo->IndexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(),
+    geo->IndexBufferGPU = DXUtil::CreateDefaultBuffer(md3dDevice.Get(),
         mCommandList.Get(), indices.data(), ibByteSize, geo->IndexBufferUploader);
 
     geo->VertexByteStride = sizeof(Vertex);
@@ -825,10 +786,16 @@ void LandAndWavesApp::BuildWavesGeometry()
 // ------------------------------------------------------------------
 // Build box geometry.
 // ------------------------------------------------------------------
-void LandAndWavesApp::BuildBoxGeometry()
+void Game::BuildBoxGeometry()
 {
     GeometryGenerator geoGen;
     GeometryGenerator::MeshData box = geoGen.CreateBox(8.0f, 8.0f, 8.0f, 3);
+
+    XMFLOAT3 vMinf3(+MathHelper::Infinity, +MathHelper::Infinity, +MathHelper::Infinity);
+    XMFLOAT3 vMaxf3(-MathHelper::Infinity, -MathHelper::Infinity, -MathHelper::Infinity);
+
+    XMVECTOR vMin = XMLoadFloat3(&vMinf3);
+    XMVECTOR vMax = XMLoadFloat3(&vMaxf3);
 
     std::vector<Vertex> vertices(box.Vertices.size());
     for (size_t i = 0; i < box.Vertices.size(); ++i)
@@ -837,7 +804,16 @@ void LandAndWavesApp::BuildBoxGeometry()
         vertices[i].Pos = p;
         vertices[i].Normal = box.Vertices[i].Normal;
         vertices[i].TexC = box.Vertices[i].TexC;
+
+        XMVECTOR P = XMLoadFloat3(&p);
+
+        vMin = XMVectorMin(vMin, P);
+        vMax = XMVectorMax(vMax, P);
     }
+
+    BoundingBox bounds;
+    XMStoreFloat3(&bounds.Center, 0.5f * (vMin + vMax));
+    XMStoreFloat3(&bounds.Extents, 0.5f * (vMax - vMin));
 
     const UINT vbByteSize = (UINT)vertices.size() * sizeof(Vertex);
 
@@ -853,10 +829,10 @@ void LandAndWavesApp::BuildBoxGeometry()
     ThrowIfFailed(D3DCreateBlob(ibByteSize, &geo->IndexBufferCPU));
     CopyMemory(geo->IndexBufferCPU->GetBufferPointer(), indices.data(), ibByteSize);
 
-    geo->VertexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(),
+    geo->VertexBufferGPU = DXUtil::CreateDefaultBuffer(md3dDevice.Get(),
         mCommandList.Get(), vertices.data(), vbByteSize, geo->VertexBufferUploader);
 
-    geo->IndexBufferGPU = d3dUtil::CreateDefaultBuffer(md3dDevice.Get(),
+    geo->IndexBufferGPU = DXUtil::CreateDefaultBuffer(md3dDevice.Get(),
         mCommandList.Get(), indices.data(), ibByteSize, geo->IndexBufferUploader);
 
     geo->VertexByteStride = sizeof(Vertex);
@@ -868,6 +844,7 @@ void LandAndWavesApp::BuildBoxGeometry()
     submesh.IndexCount = (UINT)indices.size();
     submesh.StartIndexLocation = 0;
     submesh.BaseVertexLocation = 0;
+    submesh.Bounds = bounds;
 
     geo->DrawArgs["box"] = submesh;
 
@@ -879,7 +856,7 @@ void LandAndWavesApp::BuildBoxGeometry()
 // is compatible and the driver can generate all the code up front to 
 // program the hardware state.
 // ------------------------------------------------------------------
-void LandAndWavesApp::BuildPSOs()
+void Game::BuildPSOs()
 {
     // In the new Direct3D 12 model, the driver can generate all the code 
     // needed to program the pipeline state at initialization time because we 
@@ -961,7 +938,7 @@ void LandAndWavesApp::BuildPSOs()
 // Build a circular array of the resources the CPU needs to modify 
 // each frame to keep both CPU and GPU busy.
 // ------------------------------------------------------------------
-void LandAndWavesApp::BuildFrameResources()
+void Game::BuildFrameResources()
 {
     // Having multiple frame resources do not prevent any waiting, but it helps
     // us keep the GPU fed. While the GPU is processing commands from frame n, 
@@ -978,7 +955,7 @@ void LandAndWavesApp::BuildFrameResources()
 // ------------------------------------------------------------------
 // Define the properties of each unique material and put them in a table.
 // ------------------------------------------------------------------
-void LandAndWavesApp::BuildMaterials()
+void Game::BuildMaterials()
 {
     auto bricks = std::make_unique<Material>();
     bricks->Name = "bricks";
@@ -1052,7 +1029,7 @@ void LandAndWavesApp::BuildMaterials()
 // same MeshGeometry, we use the DrawArgs to get the DrawIndexedInstanced 
 // parameters to draw a subregion of the vertex/index buffers.
 // ------------------------------------------------------------------
-void LandAndWavesApp::BuildRenderItems()
+void Game::BuildRenderItems()
 {
     // Box render item
     auto boxRitem = std::make_unique<RenderItem>();
@@ -1061,9 +1038,11 @@ void LandAndWavesApp::BuildRenderItems()
     boxRitem->Mat = mMaterials["crate01"].get();
     boxRitem->Geo = mGeometries["boxGeo"].get();
     boxRitem->PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+    boxRitem->InstanceCount = 0;
     boxRitem->IndexCount = boxRitem->Geo->DrawArgs["box"].IndexCount;
     boxRitem->StartIndexLocation = boxRitem->Geo->DrawArgs["box"].StartIndexLocation;
     boxRitem->BaseVertexLocation = boxRitem->Geo->DrawArgs["box"].BaseVertexLocation;
+    boxRitem->Bounds = boxRitem->Geo->DrawArgs["box"].Bounds;
 
     // Generate instance data for box render item.
     const int n = 5;
@@ -1102,38 +1081,38 @@ void LandAndWavesApp::BuildRenderItems()
 
     mRitemLayer[(int)RenderLayer::Opaque].push_back(boxRitem.get());
 
-    // Water render item
-    auto wavesRitem = std::make_unique<RenderItem>();
-    wavesRitem->World = MathHelper::Identity4x4();
-    XMStoreFloat4x4(&wavesRitem->TexTransform, XMMatrixScaling(5.0f, 5.0f, 1.0f));
-    wavesRitem->ObjCBIndex = 0;
-    wavesRitem->Mat = mMaterials["water"].get();
-    wavesRitem->Geo = mGeometries["waterGeo"].get();
-    wavesRitem->PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
-    wavesRitem->IndexCount = wavesRitem->Geo->DrawArgs["grid"].IndexCount;
-    wavesRitem->StartIndexLocation = wavesRitem->Geo->DrawArgs["grid"].StartIndexLocation;
-    wavesRitem->BaseVertexLocation = wavesRitem->Geo->DrawArgs["grid"].BaseVertexLocation;
+    //// Water render item
+    //auto wavesRitem = std::make_unique<RenderItem>();
+    //wavesRitem->World = MathHelper::Identity4x4();
+    //XMStoreFloat4x4(&wavesRitem->TexTransform, XMMatrixScaling(5.0f, 5.0f, 1.0f));
+    //wavesRitem->ObjCBIndex = 0;
+    //wavesRitem->Mat = mMaterials["water"].get();
+    //wavesRitem->Geo = mGeometries["waterGeo"].get();
+    //wavesRitem->PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+    //wavesRitem->IndexCount = wavesRitem->Geo->DrawArgs["grid"].IndexCount;
+    //wavesRitem->StartIndexLocation = wavesRitem->Geo->DrawArgs["grid"].StartIndexLocation;
+    //wavesRitem->BaseVertexLocation = wavesRitem->Geo->DrawArgs["grid"].BaseVertexLocation;
 
-    mWavesRitem = wavesRitem.get();
+    //mWavesRitem = wavesRitem.get();
 
-    mRitemLayer[(int)RenderLayer::Transparent].push_back(wavesRitem.get());
+    //mRitemLayer[(int)RenderLayer::Transparent].push_back(wavesRitem.get());
 
-    // Grid render item
-    auto gridRitem = std::make_unique<RenderItem>();
-    gridRitem->World = MathHelper::Identity4x4();
-    XMStoreFloat4x4(&gridRitem->TexTransform, XMMatrixScaling(5.0f, 5.0f, 1.0f));
-    gridRitem->ObjCBIndex = 1;
-    gridRitem->Mat = mMaterials["grass"].get();
-    gridRitem->Geo = mGeometries["landGeo"].get();
-    gridRitem->PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
-    gridRitem->IndexCount = gridRitem->Geo->DrawArgs["grid"].IndexCount;
-    gridRitem->StartIndexLocation = gridRitem->Geo->DrawArgs["grid"].StartIndexLocation;
-    gridRitem->BaseVertexLocation = gridRitem->Geo->DrawArgs["grid"].BaseVertexLocation;
+    //// Grid render item
+    //auto gridRitem = std::make_unique<RenderItem>();
+    //gridRitem->World = MathHelper::Identity4x4();
+    //XMStoreFloat4x4(&gridRitem->TexTransform, XMMatrixScaling(5.0f, 5.0f, 1.0f));
+    //gridRitem->ObjCBIndex = 1;
+    //gridRitem->Mat = mMaterials["grass"].get();
+    //gridRitem->Geo = mGeometries["landGeo"].get();
+    //gridRitem->PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+    //gridRitem->IndexCount = gridRitem->Geo->DrawArgs["grid"].IndexCount;
+    //gridRitem->StartIndexLocation = gridRitem->Geo->DrawArgs["grid"].StartIndexLocation;
+    //gridRitem->BaseVertexLocation = gridRitem->Geo->DrawArgs["grid"].BaseVertexLocation;
 
-    mRitemLayer[(int)RenderLayer::Opaque].push_back(gridRitem.get());
+    //mRitemLayer[(int)RenderLayer::Opaque].push_back(gridRitem.get());
 
-    mAllRitems.push_back(std::move(wavesRitem));
-    mAllRitems.push_back(std::move(gridRitem));
+    //mAllRitems.push_back(std::move(wavesRitem));
+    //mAllRitems.push_back(std::move(gridRitem));
     mAllRitems.push_back(std::move(boxRitem));
 }
 
@@ -1143,7 +1122,7 @@ void LandAndWavesApp::BuildRenderItems()
 // ------------------------------------------------------------------
 // Draw stored render items. Invoked in the main Draw call.
 // ------------------------------------------------------------------
-void LandAndWavesApp::DrawRenderItems(ID3D12GraphicsCommandList* cmdList, const std::vector<RenderItem*>& ritems)
+void Game::DrawRenderItems(ID3D12GraphicsCommandList* cmdList, const std::vector<RenderItem*>& ritems)
 {
     // For each render item...
     for (size_t i = 0; i < ritems.size(); ++i)
@@ -1168,7 +1147,7 @@ void LandAndWavesApp::DrawRenderItems(ID3D12GraphicsCommandList* cmdList, const 
 // ------------------------------------------------------------------
 // Define static samplers (2032 max).
 // ------------------------------------------------------------------
-std::array<const CD3DX12_STATIC_SAMPLER_DESC, 6> LandAndWavesApp::GetStaticSamplers()
+std::array<const CD3DX12_STATIC_SAMPLER_DESC, 6> Game::GetStaticSamplers()
 {
     // Applications usually only need a handful of samplers.  
     // So just define them all up front and keep them available as part of the 
@@ -1231,7 +1210,7 @@ std::array<const CD3DX12_STATIC_SAMPLER_DESC, 6> LandAndWavesApp::GetStaticSampl
 // Return a value from function y = f(x,z) and apply it to each grid
 // point.
 // ------------------------------------------------------------------
-float LandAndWavesApp::GetHillsHeight(float x, float z)const
+float Game::GetHillsHeight(float x, float z)const
 {
     return 0.3f * (z * sinf(0.1f * x) + x * cosf(0.1f * z));
 }
@@ -1239,7 +1218,7 @@ float LandAndWavesApp::GetHillsHeight(float x, float z)const
 // ------------------------------------------------------------------
 // Return the normal value of each grid point.
 // ------------------------------------------------------------------
-XMFLOAT3 LandAndWavesApp::GetHillsNormal(float x, float z)const
+XMFLOAT3 Game::GetHillsNormal(float x, float z)const
 {
     // n = (-df/dx, 1, -df/dz)
     XMFLOAT3 n(
@@ -1261,7 +1240,7 @@ XMFLOAT3 LandAndWavesApp::GetHillsNormal(float x, float z)const
 // OS-level messages anyway, so these helpers have been created to 
 // provide basic mouse input if you want it.
 // ------------------------------------------------------------------
-void LandAndWavesApp::OnMouseDown(WPARAM btnState, int x, int y)
+void Game::OnMouseDown(WPARAM btnState, int x, int y)
 {
     // Add any custom code here...
 
@@ -1278,7 +1257,7 @@ void LandAndWavesApp::OnMouseDown(WPARAM btnState, int x, int y)
 // ------------------------------------------------------------------
 // Helper method for mouse release
 // ------------------------------------------------------------------
-void LandAndWavesApp::OnMouseUp(WPARAM btnState, int x, int y)
+void Game::OnMouseUp(WPARAM btnState, int x, int y)
 {
     // Add any custom code here...
 
@@ -1292,7 +1271,7 @@ void LandAndWavesApp::OnMouseUp(WPARAM btnState, int x, int y)
 // mouse is currently over the window, or if we're currently capturing
 // the mouse.
 // ------------------------------------------------------------------
-void LandAndWavesApp::OnMouseMove(WPARAM btnState, int x, int y)
+void Game::OnMouseMove(WPARAM btnState, int x, int y)
 {
     // Rotate the camera's look direction.
     // Hold the right mouse button down and move the mouse to "look" in
@@ -1317,7 +1296,7 @@ void LandAndWavesApp::OnMouseMove(WPARAM btnState, int x, int y)
 // WheelDelta may be positive or negative, depending on the direction 
 // of the scroll
 // ------------------------------------------------------------------
-void LandAndWavesApp::OnMouseWheel(float wheelDelta, int x, int y)
+void Game::OnMouseWheel(float wheelDelta, int x, int y)
 {
     // Add any custom code here...
 }

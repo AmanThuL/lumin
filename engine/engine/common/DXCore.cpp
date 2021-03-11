@@ -2,7 +2,7 @@
 // d3dApp.cpp
 //*******************************************************************
 
-#include "d3dApp.h"
+#include "DXCore.h"
 
 #include <Windowsx.h>
 
@@ -14,7 +14,7 @@ const int gNumFrameResources = 3;
 
 // Define the static instance variable so our OS-level 
 // message handling function below can talk to our object
-D3DApp* D3DApp::mAppInstance = nullptr;
+DXCore* DXCore::mDXCoreInstance = nullptr;
 
 // ------------------------------------------------------------------
 // The global callback function for handling windows OS-level messages.
@@ -22,19 +22,19 @@ D3DApp* D3DApp::mAppInstance = nullptr;
 // This needs to be a global function (not part of a class), but we want
 // to forward the parameters to our class to properly handle them.
 // ------------------------------------------------------------------
-LRESULT D3DApp::MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+LRESULT DXCore::MainWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	// Forward hwnd on because we can get messages (e.g., WM_CREATE)
 	// before CreateWindow returns, and thus before mhMainWnd is valid.
-	return D3DApp::GetAppInstance()->MsgProc(hwnd, msg, wParam, lParam);
+	return DXCore::GetDXCoreInstance()->ProcessMessage(hwnd, msg, wParam, lParam);
 }
 
 // ------------------------------------------------------------------
 // Return a reference to the D3DApp instance.
 // ------------------------------------------------------------------
-D3DApp* D3DApp::GetAppInstance()
+DXCore* DXCore::GetDXCoreInstance()
 {
-	return mAppInstance;
+	return mDXCoreInstance;
 }
 
 // ------------------------------------------------------------------
@@ -42,23 +42,26 @@ D3DApp* D3DApp::GetAppInstance()
 //
 // hInstance   - The application's OS-level handle (unique ID)
 // ------------------------------------------------------------------
-D3DApp::D3DApp(HINSTANCE hInstance)
-	: mhAppInst(hInstance)
+DXCore::DXCore(HINSTANCE hInstance)
+	: mhCoreInst(hInstance)
 {
 	// Save a static reference to this object.
 	//  - Since the OS-level message function must be a non-member (global) 
 	//    function, it won't be able to directly interact with our D3DApp 
 	//    object otherwise.
 	//  - (Yes, a singleton might be a safer choice here).
-	assert(mAppInstance == nullptr);
-	mAppInstance = this;
+	assert(mDXCoreInstance == nullptr);
+	mDXCoreInstance = this;
+
+	// Setup ImGui
+	GUI::Init();
 }
 
 // ------------------------------------------------------------------
 // Destructor - Release the COM interfaces the D3DApp acquires and 
 // flushes the command queue
 // ------------------------------------------------------------------
-D3DApp::~D3DApp()
+DXCore::~DXCore()
 {
 	// Wait until the GPU is done processing the commands in the queue 
 	// before we destroy any resource the GPU is still referencing.
@@ -70,15 +73,15 @@ D3DApp::~D3DApp()
 // ------------------------------------------------------------------
 // Returns a copy of the application instance handle.
 // ------------------------------------------------------------------
-HINSTANCE D3DApp::AppInst() const
+HINSTANCE DXCore::CoreInst() const
 {
-	return mhAppInst;
+	return mhCoreInst;
 }
 
 // ------------------------------------------------------------------
 // Returns a copy of the main window handle.
 // ------------------------------------------------------------------
-HWND D3DApp::MainWnd()const
+HWND DXCore::MainWnd()const
 {
 	return mhMainWnd;
 }
@@ -86,7 +89,7 @@ HWND D3DApp::MainWnd()const
 // ------------------------------------------------------------------
 // Returns the ratio of the back buffer width to its height.
 // ------------------------------------------------------------------
-float D3DApp::AspectRatio() const
+float DXCore::AspectRatio() const
 {
 	return static_cast<float>(mClientWidth) / mClientHeight;
 }
@@ -94,7 +97,7 @@ float D3DApp::AspectRatio() const
 // ------------------------------------------------------------------
 // Returns true is 4X MSAA is enabled and false otherwise.
 // ------------------------------------------------------------------
-bool D3DApp::Get4xMsaaState() const
+bool DXCore::Get4xMsaaState() const
 {
 	return m4xMsaaState;
 }
@@ -102,7 +105,7 @@ bool D3DApp::Get4xMsaaState() const
 // ------------------------------------------------------------------
 // Enables/disables 4X MSAA.
 // ------------------------------------------------------------------
-void D3DApp::Set4xMsaaState(bool value)
+void DXCore::Set4xMsaaState(bool value)
 {
 	if (m4xMsaaState != value)
 	{
@@ -117,7 +120,7 @@ void D3DApp::Set4xMsaaState(bool value)
 // ------------------------------------------------------------------
 // This method wraps the application message loop.
 // ------------------------------------------------------------------
-int D3DApp::Run()
+int DXCore::Run()
 {
 	MSG msg = { 0 };
 
@@ -154,6 +157,9 @@ int D3DApp::Run()
 		}
 	}
 
+	// ImGui clean up
+	GUI::ShutDown();
+
 	return (int)msg.wParam;
 }
 
@@ -164,7 +170,7 @@ int D3DApp::Run()
 // Initialize the application such as allocating resources, initializing 
 // objects, and setting up the 3D scene.
 // ------------------------------------------------------------------
-bool D3DApp::Initialize()
+bool DXCore::Initialize()
 {
 	if (!InitMainWindow())
 		return false;
@@ -183,8 +189,10 @@ bool D3DApp::Initialize()
 // window. Only need to override this method if there is a message that 
 // needs to be handled and MsgProc does not handle.
 // ------------------------------------------------------------------
-LRESULT D3DApp::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+LRESULT DXCore::ProcessMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+	//GUI::SetupPlatform(MainWnd(), msg, wParam, lParam);
+
 	switch (msg)
 	{
 		// WM_ACTIVATE is sent when the window is activated or deactivated.  
@@ -309,6 +317,7 @@ LRESULT D3DApp::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	case WM_MOUSEMOVE:
 		OnMouseMove(wParam, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
 		return 0;
+
 	case WM_KEYUP:
 		if (wParam == VK_ESCAPE)
 		{
@@ -328,7 +337,7 @@ LRESULT D3DApp::MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 // Virtual function where you create the RTV and DSV descriptor heaps 
 // your application needs.
 // ------------------------------------------------------------------
-void D3DApp::CreateRtvAndDsvDescriptorHeaps()
+void DXCore::CreateRtvAndDsvDescriptorHeaps()
 {
 	D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc;
 	rtvHeapDesc.NumDescriptors = SwapChainBufferCount;
@@ -352,7 +361,7 @@ void D3DApp::CreateRtvAndDsvDescriptorHeaps()
 // Called when a WM_SIZE message is received. Some Direct3D properties 
 // need to be changed when the window is resized.
 // ------------------------------------------------------------------
-void D3DApp::OnResize()
+void DXCore::OnResize()
 {
 	assert(md3dDevice);
 	assert(mSwapChain);
@@ -457,14 +466,14 @@ void D3DApp::OnResize()
 // ------------------------------------------------------------------
 // Initializes the main application window.
 // ------------------------------------------------------------------
-bool D3DApp::InitMainWindow()
+bool DXCore::InitMainWindow()
 {
 	WNDCLASS wc;
 	wc.style = CS_HREDRAW | CS_VREDRAW;
 	wc.lpfnWndProc = MainWndProc;
 	wc.cbClsExtra = 0;
 	wc.cbWndExtra = 0;
-	wc.hInstance = mhAppInst;
+	wc.hInstance = mhCoreInst;
 	wc.hIcon = LoadIcon(0, IDI_APPLICATION);
 	wc.hCursor = LoadCursor(0, IDC_ARROW);
 	wc.hbrBackground = (HBRUSH)GetStockObject(NULL_BRUSH);
@@ -485,7 +494,7 @@ bool D3DApp::InitMainWindow()
 	int height = R.bottom - R.top;
 
 	mhMainWnd = CreateWindow(L"MainWnd", mMainWndCaption.c_str(),
-		WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, width, height, 0, 0, mhAppInst, 0);
+		WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, width, height, 0, 0, mhCoreInst, 0);
 	if (!mhMainWnd)
 	{
 		MessageBox(0, L"CreateWindow Failed.", 0, 0);
@@ -501,7 +510,7 @@ bool D3DApp::InitMainWindow()
 // ------------------------------------------------------------------
 // Initializes Direct3D by steps.
 // ------------------------------------------------------------------
-bool D3DApp::InitDirect3D()
+bool DXCore::InitDirect3D()
 {
 #if defined(DEBUG) || defined(_DEBUG)
 	// Enable the D3D12 debug layer for debug mode builds.
@@ -587,7 +596,7 @@ bool D3DApp::InitDirect3D()
 // ------------------------------------------------------------------
 // Check the maximum supported feature level.
 // ------------------------------------------------------------------
-void D3DApp::CheckMaxFeatureSupport()
+void DXCore::CheckMaxFeatureSupport()
 {
 	D3D_FEATURE_LEVEL featureLevels[4] = {
 		D3D_FEATURE_LEVEL_12_1,
@@ -611,7 +620,7 @@ void D3DApp::CheckMaxFeatureSupport()
 // Creates the command queue, a command list allocator, and a command 
 // list.
 // ------------------------------------------------------------------
-void D3DApp::CreateCommandObjects()
+void DXCore::CreateCommandObjects()
 {
 	// The CPU submits commands to the GPU's command queue through the Direct3D 
 	// API using command lists.
@@ -647,7 +656,7 @@ void D3DApp::CreateCommandObjects()
 // Creates the swap chain and allows to recreate swap chain with 
 // different settings.
 // ------------------------------------------------------------------
-void D3DApp::CreateSwapChain()
+void DXCore::CreateSwapChain()
 {
 	// Release the previous swapchain we will be recreating.
 	mSwapChain.Reset();
@@ -698,7 +707,7 @@ void D3DApp::CreateSwapChain()
 // windowLines   - Number of lines visible at once in the window
 // windowColumns - Number of columns visible at once in the window
 // ------------------------------------------------------------------
-void D3DApp::CreateConsoleWindow(int bufferLines, int bufferColumns, int windowLines, int windowColumns)
+void DXCore::CreateConsoleWindow(int bufferLines, int bufferColumns, int windowLines, int windowColumns)
 {
 	// Our temp console info struct
 	CONSOLE_SCREEN_BUFFER_INFO coninfo;
@@ -738,7 +747,7 @@ void D3DApp::CreateConsoleWindow(int bufferLines, int bufferColumns, int windowL
 // Forces the CPU to wait until the GPU has finished processing all the 
 // commands in the queue.
 // ------------------------------------------------------------------
-void D3DApp::FlushCommandQueue()
+void DXCore::FlushCommandQueue()
 {
 	// Advance the fence value to mark commands up to this fence point.
 	mCurrentFence++;
@@ -767,7 +776,7 @@ void D3DApp::FlushCommandQueue()
 // Returns an ID3D12Resource to the current back buffer in the swap 
 // chain.
 // ------------------------------------------------------------------
-ID3D12Resource* D3DApp::CurrentBackBuffer() const
+ID3D12Resource* DXCore::CurrentBackBuffer() const
 {
 	return mSwapChainBuffer[mCurrBackBuffer].Get();
 }
@@ -775,7 +784,7 @@ ID3D12Resource* D3DApp::CurrentBackBuffer() const
 // ------------------------------------------------------------------
 // Returns the RTV(render target view) to the current back buffer.
 // ------------------------------------------------------------------
-D3D12_CPU_DESCRIPTOR_HANDLE D3DApp::CurrentBackBufferView() const
+D3D12_CPU_DESCRIPTOR_HANDLE DXCore::CurrentBackBufferView() const
 {
 	// CD3DX12 constructor to offset to the RTV of the current back buffer.
 	return CD3DX12_CPU_DESCRIPTOR_HANDLE(
@@ -787,7 +796,7 @@ D3D12_CPU_DESCRIPTOR_HANDLE D3DApp::CurrentBackBufferView() const
 // ------------------------------------------------------------------
 // Returns the DSV (depth/stencil view) to the main depth/stencil buffer.
 // ------------------------------------------------------------------
-D3D12_CPU_DESCRIPTOR_HANDLE D3DApp::DepthStencilView() const
+D3D12_CPU_DESCRIPTOR_HANDLE DXCore::DepthStencilView() const
 {
 	return mDsvHeap->GetCPUDescriptorHandleForHeapStart();
 }
@@ -796,7 +805,7 @@ D3D12_CPU_DESCRIPTOR_HANDLE D3DApp::DepthStencilView() const
 // Calculates the average frames per second and the average milliseconds 
 // per frame.
 // ------------------------------------------------------------------
-void D3DApp::UpdateTitleBarStats()
+void DXCore::UpdateTitleBarStats()
 {
 	// Code computes the average frames per second, and also the 
 	// average time it takes to render one frame.  These stats 
@@ -820,8 +829,7 @@ void D3DApp::UpdateTitleBarStats()
 	std::wostringstream output;
 	output.precision(6);
 	output << mMainWndCaption <<
-		L"    Width: "		<< to_wstring(mClientWidth)	 <<
-		L"    Height: "		<< to_wstring(mClientHeight) <<
+		L"    Resolution: " << to_wstring(mClientWidth)	 << " x " << to_wstring(mClientHeight) <<
 		L"    FPS: "		<< to_wstring(frameCnt)		 <<
 		L"    Frame Time: " << to_wstring(mspf)			 << L"ms";
 
@@ -846,7 +854,7 @@ void D3DApp::UpdateTitleBarStats()
 // ------------------------------------------------------------------
 // Enumerates all the adapters on a system.
 // ------------------------------------------------------------------
-void D3DApp::LogAdapters()
+void DXCore::LogAdapters()
 {
 	UINT i = 0;
 	IDXGIAdapter* adapter = nullptr;
@@ -877,7 +885,7 @@ void D3DApp::LogAdapters()
 // ------------------------------------------------------------------
 // Enumerates all the outputs associated with an adapter.
 // ------------------------------------------------------------------
-void D3DApp::LogAdapterOutputs(IDXGIAdapter* adapter)
+void DXCore::LogAdapterOutputs(IDXGIAdapter* adapter)
 {
 	UINT i = 0;
 	IDXGIOutput* output = nullptr;
@@ -903,7 +911,7 @@ void D3DApp::LogAdapterOutputs(IDXGIAdapter* adapter)
 // Enumerates all the display modes an output supports for a given 
 // format.
 // ------------------------------------------------------------------
-void D3DApp::LogOutputDisplayModes(IDXGIOutput* output, DXGI_FORMAT format)
+void DXCore::LogOutputDisplayModes(IDXGIOutput* output, DXGI_FORMAT format)
 {
 	UINT count = 0;
 	UINT flags = 0;

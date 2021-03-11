@@ -3,7 +3,6 @@
 #include <iostream>
 
 #include <windows.h>
-#include <Windows.h>
 
 #include <wrl.h>
 #include <dxgi1_4.h>

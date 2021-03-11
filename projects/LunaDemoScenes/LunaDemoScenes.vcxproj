@@ -107,16 +107,17 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\engine\engine\DescriptorHeapWrapper.h" />
     <ClInclude Include="..\..\engine\engine\FrameResource.h" />
     <ClInclude Include="..\..\engine\engine\RenderItem.h" />
     <ClInclude Include="..\..\engine\engine\common\Camera.h" />
     <ClInclude Include="..\..\engine\engine\common\DDSTextureLoader.h" />
+    <ClInclude Include="..\..\engine\engine\common\DXCore.h" />
+    <ClInclude Include="..\..\engine\engine\common\DXUtil.h" />
     <ClInclude Include="..\..\engine\engine\common\GameTimer.h" />
     <ClInclude Include="..\..\engine\engine\common\GeometryGenerator.h" />
     <ClInclude Include="..\..\engine\engine\common\MathHelper.h" />
     <ClInclude Include="..\..\engine\engine\common\UploadBuffer.h" />
-    <ClInclude Include="..\..\engine\engine\common\d3dApp.h" />
-    <ClInclude Include="..\..\engine\engine\common\d3dUtil.h" />
     <ClInclude Include="..\..\engine\engine\common\d3dx12.h" />
     <ClInclude Include="..\..\engine\engine\gui\GUI.h" />
     <ClInclude Include="..\..\engine\vendor\imgui\backends\imgui_impl_dx12.h" />
@@ -127,19 +128,20 @@
     <ClInclude Include="..\..\engine\vendor\imgui\imstb_rectpack.h" />
     <ClInclude Include="..\..\engine\vendor\imgui\imstb_textedit.h" />
     <ClInclude Include="..\..\engine\vendor\imgui\imstb_truetype.h" />
-    <ClInclude Include="src\LandAndWavesDemo\LandAndWavesApp.h" />
+    <ClInclude Include="src\LandAndWavesDemo\Game.h" />
     <ClInclude Include="src\LandAndWavesDemo\Waves.h" />
     <ClInclude Include="src\lmpch.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\engine\engine\DescriptorHeapWrapper.cpp" />
     <ClCompile Include="..\..\engine\engine\FrameResource.cpp" />
     <ClCompile Include="..\..\engine\engine\common\Camera.cpp" />
     <ClCompile Include="..\..\engine\engine\common\DDSTextureLoader.cpp" />
+    <ClCompile Include="..\..\engine\engine\common\DXCore.cpp" />
+    <ClCompile Include="..\..\engine\engine\common\DXUtil.cpp" />
     <ClCompile Include="..\..\engine\engine\common\GameTimer.cpp" />
     <ClCompile Include="..\..\engine\engine\common\GeometryGenerator.cpp" />
     <ClCompile Include="..\..\engine\engine\common\MathHelper.cpp" />
-    <ClCompile Include="..\..\engine\engine\common\d3dApp.cpp" />
-    <ClCompile Include="..\..\engine\engine\common\d3dUtil.cpp" />
     <ClCompile Include="..\..\engine\engine\gui\GUI.cpp" />
     <ClCompile Include="..\..\engine\vendor\imgui\backends\imgui_impl_dx12.cpp" />
     <ClCompile Include="..\..\engine\vendor\imgui\backends\imgui_impl_win32.cpp" />
@@ -148,7 +150,7 @@
     <ClCompile Include="..\..\engine\vendor\imgui\imgui_draw.cpp" />
     <ClCompile Include="..\..\engine\vendor\imgui\imgui_tables.cpp" />
     <ClCompile Include="..\..\engine\vendor\imgui\imgui_widgets.cpp" />
-    <ClCompile Include="src\LandAndWavesDemo\LandAndWavesApp.cpp" />
+    <ClCompile Include="src\LandAndWavesDemo\Game.cpp" />
     <ClCompile Include="src\LandAndWavesDemo\Waves.cpp" />
     <ClCompile Include="src\Main.cpp" />
     <ClCompile Include="src\lmpch.cpp">

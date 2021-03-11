@@ -12,12 +12,13 @@
 
 #pragma once
 
-#include "common/d3dApp.h"
+#include "common/DXCore.h"
 #include "common/MathHelper.h"
 #include "common/UploadBuffer.h"
 #include "common/GeometryGenerator.h"
 #include "common/Camera.h"
 
+#include "DescriptorHeapWrapper.h"
 #include "FrameResource.h"
 #include "RenderItem.h"
 #include "Waves.h"
@@ -30,14 +31,14 @@ enum class RenderLayer : int
 	Count
 };
 
-class LandAndWavesApp : public D3DApp
+class Game : public DXCore
 {
 public:
 
-	LandAndWavesApp(HINSTANCE hInstance);
-	LandAndWavesApp(const LandAndWavesApp& rhs) = delete;
-	LandAndWavesApp& operator=(const LandAndWavesApp& rhs) = delete;
-	~LandAndWavesApp();
+	Game(HINSTANCE hInstance);
+	Game(const Game& rhs) = delete;
+	Game& operator=(const Game& rhs) = delete;
+	~Game();
 
 	virtual bool Initialize()override;
 
@@ -83,11 +84,9 @@ private:
 	FrameResource* mCurrFrameResource = nullptr;
 	int mCurrFrameResourceIndex = 0;
 
-	UINT mCbvSrvDescriptorSize = 0;
-
 	Microsoft::WRL::ComPtr<ID3D12RootSignature> mRootSignature = nullptr;
 
-	Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> mSrvDescriptorHeap = nullptr;
+	std::unique_ptr<DescriptorHeapWrapper> mCbvSrvUavDescriptorHeap = nullptr;
 
 	// Use unordered maps for constant time lookup and reference our objects by 
 	// name.
@@ -109,6 +108,10 @@ private:
 
 	// Instance count
 	UINT mInstanceCount = 0;
+
+	// Application-level frustum culling
+	bool mFrustumCullingEnabled = true;
+	DirectX::BoundingFrustum mCamFrustum;
 
 	std::unique_ptr<Waves> mWaves;
 

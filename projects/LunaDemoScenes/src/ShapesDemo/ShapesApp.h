@@ -13,14 +13,14 @@
 
 #pragma once
 
-#include "common/d3dApp.h"
+#include "common/DXCore.h"
 #include "common/MathHelper.h"
 #include "common/UploadBuffer.h"
 #include "common/GeometryGenerator.h"
 #include "FrameResource.h"
 #include "RenderItem.h"
 
-class ShapesApp : public D3DApp
+class ShapesApp : public DXCore
 {
 public:
 

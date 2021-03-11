@@ -2,7 +2,7 @@
 // d3dUtil.cpp
 //*******************************************************************
 
-#include "d3dUtil.h"
+#include "DXUtil.h"
 #include <comdef.h>
 #include <fstream>
 
@@ -16,12 +16,12 @@ DxException::DxException(HRESULT hr, const std::wstring& functionName, const std
 {
 }
 
-bool d3dUtil::IsKeyDown(int vkeyCode)
+bool DXUtil::IsKeyDown(int vkeyCode)
 {
     return (GetAsyncKeyState(vkeyCode) & 0x8000) != 0;
 }
 
-ComPtr<ID3DBlob> d3dUtil::LoadBinary(const std::wstring& filename)
+ComPtr<ID3DBlob> DXUtil::LoadBinary(const std::wstring& filename)
 {
     std::ifstream fin(filename, std::ios::binary);
 
@@ -38,7 +38,7 @@ ComPtr<ID3DBlob> d3dUtil::LoadBinary(const std::wstring& filename)
     return blob;
 }
 
-Microsoft::WRL::ComPtr<ID3D12Resource> d3dUtil::CreateDefaultBuffer(
+Microsoft::WRL::ComPtr<ID3D12Resource> DXUtil::CreateDefaultBuffer(
     ID3D12Device* device,
     ID3D12GraphicsCommandList* cmdList,
     const void* initData,
@@ -90,7 +90,7 @@ Microsoft::WRL::ComPtr<ID3D12Resource> d3dUtil::CreateDefaultBuffer(
     return defaultBuffer;
 }
 
-ComPtr<ID3DBlob> d3dUtil::CompileShader(
+ComPtr<ID3DBlob> DXUtil::CompileShader(
     const std::wstring& filename,
     const D3D_SHADER_MACRO* defines,
     const std::string& entrypoint,

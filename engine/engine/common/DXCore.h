@@ -15,7 +15,7 @@
 #include <crtdbg.h>
 #endif
 
-#include "d3dUtil.h"
+#include "DXUtil.h"
 #include "GameTimer.h"
 #include "gui/GUI.h"
 
@@ -24,20 +24,20 @@
 #pragma comment(lib, "D3D12.lib")
 #pragma comment(lib, "dxgi.lib")
 
-class D3DApp
+class DXCore
 {
 protected:
 
-	D3DApp(HINSTANCE hInstance);
-	D3DApp(const D3DApp& rhs) = delete;
-	D3DApp& operator=(const D3DApp& rhs) = delete;
+	DXCore(HINSTANCE hInstance);
+	DXCore(const DXCore& rhs) = delete;
+	DXCore& operator=(const DXCore& rhs) = delete;
 
-	virtual ~D3DApp();
+	virtual ~DXCore();
 
 public:
 
 	// Static requirements for OS-level message processing
-	static D3DApp* GetAppInstance();
+	static DXCore* GetDXCoreInstance();
 	static LRESULT CALLBACK MainWndProc(
 		HWND hwnd,			// Window handle
 		UINT msg,			// Message
@@ -45,7 +45,7 @@ public:
 		LPARAM lParam);		// Message's second parameter
 
 	// Trivial access functions
-	HINSTANCE AppInst()const;
+	HINSTANCE CoreInst()const;
 	HWND      MainWnd()const;
 	float     AspectRatio()const;
 
@@ -56,7 +56,7 @@ public:
 
 	// Framework methods for override
 	virtual bool Initialize();
-	virtual LRESULT MsgProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
+	virtual LRESULT ProcessMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 	virtual void CreateRtvAndDsvDescriptorHeaps();
 	virtual void OnResize();
 
@@ -94,12 +94,12 @@ protected:
 	void LogOutputDisplayModes(IDXGIOutput* output, DXGI_FORMAT format);
 
 protected:
-	static D3DApp* mAppInstance;
+	static DXCore* mDXCoreInstance;
 
 	// Used to keep track of the “delta-time” and game time (§4.4).
 	GameTimer mTimer;
 
-	HINSTANCE mhAppInst = nullptr;		// Application instance handle
+	HINSTANCE mhCoreInst = nullptr;		// Application instance handle
 	HWND      mhMainWnd = nullptr;		// Main window handle
 	bool      mAppPaused = false;		// Is the application paused?
 	bool      mMinimized = false;		// Is the application minimized?
@@ -140,13 +140,13 @@ protected:
 	UINT mCbvSrvUavDescriptorSize = 0;
 
 	// Derived class should set these in derived constructor to customize starting values.
-	std::wstring	mMainWndCaption = L"DirectX Rendering Engine";
+	std::wstring	mMainWndCaption = L"LUMIN";
 	bool			titleBarStats = true;	// Show extra stats in title bar?
 	D3D_DRIVER_TYPE md3dDriverType = D3D_DRIVER_TYPE_HARDWARE;
 	DXGI_FORMAT		mBackBufferFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
 	DXGI_FORMAT		mDepthStencilFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
-	int				mClientWidth = 1600;
-	int				mClientHeight = 900;
+	int				mClientWidth = 1920;
+	int				mClientHeight = 1080;
 
 private:
 	void UpdateTitleBarStats();	// Puts debug info in the title bar

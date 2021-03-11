@@ -30,6 +30,9 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\engine\engine\DescriptorHeapWrapper.h">
+      <Filter>engine\engine</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\engine\engine\FrameResource.h">
       <Filter>engine\engine</Filter>
     </ClInclude>
@@ -42,6 +45,12 @@
     <ClInclude Include="..\..\engine\engine\common\DDSTextureLoader.h">
       <Filter>engine\engine\common</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\engine\engine\common\DXCore.h">
+      <Filter>engine\engine\common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\engine\engine\common\DXUtil.h">
+      <Filter>engine\engine\common</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\engine\engine\common\GameTimer.h">
       <Filter>engine\engine\common</Filter>
     </ClInclude>
@@ -52,12 +61,6 @@
       <Filter>engine\engine\common</Filter>
     </ClInclude>
     <ClInclude Include="..\..\engine\engine\common\UploadBuffer.h">
-      <Filter>engine\engine\common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\engine\engine\common\d3dApp.h">
-      <Filter>engine\engine\common</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\engine\engine\common\d3dUtil.h">
       <Filter>engine\engine\common</Filter>
     </ClInclude>
     <ClInclude Include="..\..\engine\engine\common\d3dx12.h">
@@ -90,7 +93,7 @@
     <ClInclude Include="..\..\engine\vendor\imgui\imstb_truetype.h">
       <Filter>engine\vendor\imgui</Filter>
     </ClInclude>
-    <ClInclude Include="src\LandAndWavesDemo\LandAndWavesApp.h">
+    <ClInclude Include="src\LandAndWavesDemo\Game.h">
       <Filter>src\LandAndWavesDemo</Filter>
     </ClInclude>
     <ClInclude Include="src\LandAndWavesDemo\Waves.h">
@@ -101,6 +104,9 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\engine\engine\DescriptorHeapWrapper.cpp">
+      <Filter>engine\engine</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\engine\engine\FrameResource.cpp">
       <Filter>engine\engine</Filter>
     </ClCompile>
@@ -110,6 +116,12 @@
     <ClCompile Include="..\..\engine\engine\common\DDSTextureLoader.cpp">
       <Filter>engine\engine\common</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\engine\engine\common\DXCore.cpp">
+      <Filter>engine\engine\common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\engine\engine\common\DXUtil.cpp">
+      <Filter>engine\engine\common</Filter>
+    </ClCompile>
     <ClCompile Include="..\..\engine\engine\common\GameTimer.cpp">
       <Filter>engine\engine\common</Filter>
     </ClCompile>
@@ -117,12 +129,6 @@
       <Filter>engine\engine\common</Filter>
     </ClCompile>
     <ClCompile Include="..\..\engine\engine\common\MathHelper.cpp">
-      <Filter>engine\engine\common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\engine\engine\common\d3dApp.cpp">
-      <Filter>engine\engine\common</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\engine\engine\common\d3dUtil.cpp">
       <Filter>engine\engine\common</Filter>
     </ClCompile>
     <ClCompile Include="..\..\engine\engine\gui\GUI.cpp">
@@ -149,7 +155,7 @@
     <ClCompile Include="..\..\engine\vendor\imgui\imgui_widgets.cpp">
       <Filter>engine\vendor\imgui</Filter>
     </ClCompile>
-    <ClCompile Include="src\LandAndWavesDemo\LandAndWavesApp.cpp">
+    <ClCompile Include="src\LandAndWavesDemo\Game.cpp">
       <Filter>src\LandAndWavesDemo</Filter>
     </ClCompile>
     <ClCompile Include="src\LandAndWavesDemo\Waves.cpp">

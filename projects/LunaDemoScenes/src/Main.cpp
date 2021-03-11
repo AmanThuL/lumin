@@ -6,8 +6,7 @@
 // class object, initializes it and enters the App loop.
 //*******************************************************************
 
-#include "ShapesDemo/ShapesApp.h"
-#include "LandAndWavesDemo/LandAndWavesApp.h"
+#include "LandAndWavesDemo/Game.h"
 
 // ------------------------------------------------------------------
 // Entry point for a graphical (non-console) Windows application
@@ -29,7 +28,7 @@ int WINAPI WinMain(
 	try
 	{
 		// Create the App object using the app handle we got from WinMain
-		LandAndWavesApp theApp(hInstance);
+		Game theApp(hInstance);
 
 		// Attempt to initialize DirectX, and exit early if something failed
 		if (!theApp.Initialize())
