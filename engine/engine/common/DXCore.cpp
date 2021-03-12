@@ -126,7 +126,7 @@ int DXCore::Run()
 
 	mTimer.Reset();
 
-	while (msg.message != WM_QUIT)
+	while (msg.message != WM_QUIT && GUI::IsWndActive())
 	{
 		// If there are Window messages then process them.
 		// Uses PeekMessage() so that it can process our game logic when no
@@ -156,9 +156,6 @@ int DXCore::Run()
 			}
 		}
 	}
-
-	// ImGui clean up
-	GUI::ShutDown();
 
 	return (int)msg.wParam;
 }
@@ -191,7 +188,7 @@ bool DXCore::Initialize()
 // ------------------------------------------------------------------
 LRESULT DXCore::ProcessMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	//GUI::SetupPlatform(MainWnd(), msg, wParam, lParam);
+	GUI::SetupWndProcHandler(MainWnd(), msg, wParam, lParam);
 
 	switch (msg)
 	{
@@ -504,6 +501,8 @@ bool DXCore::InitMainWindow()
 	ShowWindow(mhMainWnd, SW_SHOW);
 	UpdateWindow(mhMainWnd);
 
+	GUI::SetupWnd(mhMainWnd);
+
 	return true;
 }
 
@@ -552,7 +551,7 @@ bool DXCore::InitDirect3D()
 		IID_PPV_ARGS(&mFence)));
 
 	// Descriptor sizes can vary across GPUs so we need to query this 
-    // information. We cache the descriptor sizes so that it is available when 
+	// information. We cache the descriptor sizes so that it is available when 
 	// we need it for various types.
 	mRtvDescriptorSize = md3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 	mDsvDescriptorSize = md3dDevice->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
@@ -715,12 +714,12 @@ void DXCore::CreateConsoleWindow(int bufferLines, int bufferColumns, int windowL
 	// Get the console info and set the number of lines
 	AllocConsole();
 	GetConsoleScreenBufferInfo(
-		GetStdHandle(STD_OUTPUT_HANDLE), 
+		GetStdHandle(STD_OUTPUT_HANDLE),
 		&coninfo);
 	coninfo.dwSize.Y = bufferLines;
 	coninfo.dwSize.X = bufferColumns;
 	SetConsoleScreenBufferSize(
-		GetStdHandle(STD_OUTPUT_HANDLE), 
+		GetStdHandle(STD_OUTPUT_HANDLE),
 		coninfo.dwSize);
 
 	SMALL_RECT rect;
@@ -825,22 +824,21 @@ void DXCore::UpdateTitleBarStats()
 	float fps = (float)frameCnt; // fps = frameCnt / 1
 	float mspf = 1000.0f / fps;
 
+	GUI::SetFrameTime(fps, mspf);
+
 	// Quick and dirty title bar text (mostly for debugging)
 	std::wostringstream output;
 	output.precision(6);
-	output << mMainWndCaption <<
-		L"    Resolution: " << to_wstring(mClientWidth)	 << " x " << to_wstring(mClientHeight) <<
-		L"    FPS: "		<< to_wstring(frameCnt)		 <<
-		L"    Frame Time: " << to_wstring(mspf)			 << L"ms";
+	output << mMainWndCaption;
 
 	// Append the version of DirectX the app is using
 	switch (dxFeatureLevel)
 	{
-	case D3D_FEATURE_LEVEL_12_1: output << L"    DirectX 12 (FL 12.1)"; break;
-	case D3D_FEATURE_LEVEL_12_0: output << L"    DirectX 12 (FL 12.0)"; break;
-	case D3D_FEATURE_LEVEL_11_1: output << L"    DirectX 12 (FL 11.1)"; break;
-	case D3D_FEATURE_LEVEL_11_0: output << L"    DirectX 12 (FL 11.0)"; break;
-	default:                     output << L"    ???";  break;
+	case D3D_FEATURE_LEVEL_12_1: output << L"   <DX12 (FL 12.1)>"; break;
+	case D3D_FEATURE_LEVEL_12_0: output << L"   <DX12 (FL 12.0)>"; break;
+	case D3D_FEATURE_LEVEL_11_1: output << L"   <DX12 (FL 11.1)>"; break;
+	case D3D_FEATURE_LEVEL_11_0: output << L"   <DX12 (FL 11.0)>"; break;
+	default:                     output << L"   <???>";  break;
 	}
 
 	SetWindowText(mhMainWnd, output.str().c_str());

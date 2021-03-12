@@ -4,6 +4,7 @@
 
 #include <windows.h>
 
+#include <algorithm>
 #include <wrl.h>
 #include <dxgi1_4.h>
 #include <d3d12.h>
@@ -14,7 +15,6 @@
 #include <DirectXCollision.h>
 #include <string>
 #include <memory>
-#include <algorithm>
 #include <vector>
 #include <array>
 #include <unordered_map>
@@ -23,3 +23,9 @@
 #include <sstream>
 #include <cassert>
 #include <stdint.h>
+#include <concrt.h>
+#include <ppl.h>
+#include <random>
+
+#include "common/d3dx12.h"
+#include "common/GeometryGenerator.h"

@@ -15,8 +15,6 @@
 
 #pragma once
 
-#include "lmpch.h"
-
 class GeometryGenerator
 {
 public:

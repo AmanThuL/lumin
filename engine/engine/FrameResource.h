@@ -86,8 +86,7 @@ struct FrameResource
 public:
 
     // Constructors
-    FrameResource(ID3D12Device* device, UINT passCount, UINT maxInstanceCount);
-    FrameResource(ID3D12Device* device, UINT passCount, UINT maxInstanceCount, UINT materialCount, UINT waveVertCount = 0);
+    FrameResource(ID3D12Device* device, UINT passCount, std::vector<UINT> maxInstanceCounts, UINT materialCount, UINT waveVertCount = 0);
 
     FrameResource(const FrameResource& rhs) = delete;
 	FrameResource& operator=(const FrameResource& rhs) = delete;
@@ -114,7 +113,7 @@ public:
     // would create a constant buffer with enough room for a 1000 objects.
     // With instancing, we would just create a structured buffer large enough 
     // to store the instance data for 1000 instances.  
-    std::unique_ptr<UploadBuffer<InstanceData>> InstanceBuffer = nullptr;
+    std::vector<std::unique_ptr<UploadBuffer<InstanceData>>> InstanceBuffer;
 
     // We cannot update a dynamic vertex buffer until the GPU is done processing
     // the commands that reference it.  So each frame needs their own.

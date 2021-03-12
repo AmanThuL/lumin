@@ -26,6 +26,9 @@ Game::Game(HINSTANCE hInstance)
 // ------------------------------------------------------------------
 Game::~Game()
 {
+    // ImGui clean up
+    GUI::ShutDown();
+
 	if (md3dDevice != nullptr)
 		FlushCommandQueue();
 }
@@ -44,17 +47,19 @@ bool Game::Initialize()
 
     mCamera.SetPosition(mDefaultCamPos);
 
-    mWaves = std::make_unique<Waves>(128, 128, 1.0f, 0.03f, 4.0f, 0.2f);
-
     LoadTextures();
     BuildRootSignature();
     BuildDescriptorHeaps();
     BuildShadersAndInputLayout();
 
     // Build scene implicit geometries
+    mGeoBuilder = make_unique<GeoBuilder>();
+    mGeoBuilder->CreateWaves(128, 128, 1.0f, 0.03f, 4.0f, 0.2f);
+    mGeoBuilder->BuildShapeGeometry(md3dDevice, mCommandList, "shapeGeo");
+
     //BuildLandGeometry();
     //BuildWavesGeometry();
-    BuildBoxGeometry();
+    //BuildBoxGeometry();
 
     BuildMaterials();
     BuildRenderItems();
@@ -130,8 +135,6 @@ void Game::Update(const GameTimer& gt)
 // ------------------------------------------------------------------
 void Game::Draw(const GameTimer& gt)
 {
-    GUI::StartFrame();
-
     auto cmdListAlloc = mCurrFrameResource->CmdListAlloc;
 
     // Reuse the memory associated with command recording. We can only reset 
@@ -182,22 +185,34 @@ void Game::Draw(const GameTimer& gt)
     auto passCB = mCurrFrameResource->PassCB->Resource();
     mCommandList->SetGraphicsRootConstantBufferView(2, passCB->GetGPUVirtualAddress());
 
+    // Bind the sky cube map.  For our demos, we just use one "world" cube map 
+    // representing the environment from far away, so all objects will use the 
+    // same cube map and we only need to set it once per-frame.  
+    // If we wanted to use "local" cube maps, we would have to change them 
+    // per-object, or dynamically index into an array of cube maps.
+    mCommandList->SetGraphicsRootDescriptorTable(3, mCbvSrvUavDescriptorHeap->GetGPUHandle(mSkyTexHeapIndex));
+
     // Bind all the textures used in this scene. Observe that we only have to
     // specify the first descriptor in the table. The root signature knows how
     // many descriptors are expected in the table.
-    mCommandList->SetGraphicsRootDescriptorTable(3, mCbvSrvUavDescriptorHeap->GetGPUHandle(0));
+    mCommandList->SetGraphicsRootDescriptorTable(4, mCbvSrvUavDescriptorHeap->GetGPUHandle(0));
     // ========================================================================
-
-    GUI::RenderFrame(mCommandList.Get(), mCbvSrvUavDescriptorHeap.get());
-
     // Draw render items and set pipeline states
     DrawRenderItems(mCommandList.Get(), mRitemLayer[(int)RenderLayer::Opaque]);
 
     mCommandList->SetPipelineState(mPSOs["alphaTested"].Get());
     DrawRenderItems(mCommandList.Get(), mRitemLayer[(int)RenderLayer::AlphaTested]);
 
+    mCommandList->SetPipelineState(mPSOs["sky"].Get());
+    DrawRenderItems(mCommandList.Get(), mRitemLayer[(int)RenderLayer::Sky]);
+
     mCommandList->SetPipelineState(mPSOs["transparent"].Get());
     DrawRenderItems(mCommandList.Get(), mRitemLayer[(int)RenderLayer::Transparent]);
+
+    // GUI rendering
+    GUI::StartFrame();
+    DrawGUI();
+    GUI::RenderFrame(mCommandList.Get(), mCbvSrvUavDescriptorHeap.get());
 
     // Indicate a state transition on the resource usage.
     mCommandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(CurrentBackBuffer(),
@@ -295,15 +310,26 @@ void Game::AnimateMaterials(const GameTimer& gt)
 // ------------------------------------------------------------------
 void Game::UpdateInstanceData(const GameTimer& gt)
 {
+    totalVisibleInstanceCount = 0;
+
     XMMATRIX view = mCamera.GetView();
     XMMATRIX invView = XMMatrixInverse(&XMMatrixDeterminant(view), view);
 
-    auto currInstanceBuffer = mCurrFrameResource->InstanceBuffer.get();
+    if (mAllRitems.empty())
+        return;
+
+    //int rItemIndex = 0;
     for (auto& e : mAllRitems)
     {
+        auto currInstanceBuffer = mCurrFrameResource->InstanceBuffer[e->instanceBufferID].get();
+
         const auto& instanceData = e->Instances;
 
         int visibleInstanceCount = 0;
+
+        // Disable frustum culling for skybox
+        if (e->layerID == (int)RenderLayer::Sky)
+            mFrustumCullingEnabled = false;
 
         for (UINT i = 0; i < (UINT)instanceData.size(); ++i)
         {
@@ -333,13 +359,9 @@ void Game::UpdateInstanceData(const GameTimer& gt)
         }
 
         e->InstanceCount = visibleInstanceCount;
+        mFrustumCullingEnabled = true;
 
-        std::wostringstream outs;
-        outs.precision(6);
-        outs << L"Instancing and Culling Demo" <<
-            L"    " << e->InstanceCount <<
-            L" objects visible out of " << e->Instances.size();
-        mMainWndCaption = outs.str();
+        totalVisibleInstanceCount += visibleInstanceCount;
     }
 }
 
@@ -426,34 +448,34 @@ void Game::UpdateWaves(const GameTimer& gt)
 {
     // Every quarter second, generate a random wave.
     static float t_base = 0.0f;
-    if ((mTimer.TotalTime() - t_base) >= 0.25f)
+    if ((gt.TotalTime() - t_base) >= 0.25f)
     {
         t_base += 0.25f;
 
-        int i = MathHelper::Rand(4, mWaves->RowCount() - 5);
-        int j = MathHelper::Rand(4, mWaves->ColumnCount() - 5);
+        int i = MathHelper::Rand(4, mGeoBuilder->GetWaves()->RowCount() - 5);
+        int j = MathHelper::Rand(4, mGeoBuilder->GetWaves()->ColumnCount() - 5);
 
         float r = MathHelper::RandF(0.2f, 0.5f);
 
-        mWaves->Disturb(i, j, r);
+        mGeoBuilder->GetWaves()->Disturb(i, j, r);
     }
 
     // Update the wave simulation.
-    mWaves->Update(gt.DeltaTime());
+    mGeoBuilder->GetWaves()->Update(gt.DeltaTime());
 
     // Update the wave vertex buffer with the new solution.
     auto currWavesVB = mCurrFrameResource->WavesVB.get();
-    for (int i = 0; i < mWaves->VertexCount(); ++i)
+    for (int i = 0; i < mGeoBuilder->GetWaves()->VertexCount(); ++i)
     {
         Vertex v;
 
-        v.Pos = mWaves->Position(i);
-        v.Normal = mWaves->Normal(i);
+        v.Pos = mGeoBuilder->GetWaves()->Position(i);
+        v.Normal = mGeoBuilder->GetWaves()->Normal(i);
 
         // Derive tex-coords from position by 
         // mapping [-w/2,w/2] --> [0,1]
-        v.TexC.x = 0.5f + v.Pos.x / mWaves->Width();
-        v.TexC.y = 0.5f - v.Pos.z / mWaves->Depth();
+        v.TexC.x = 0.5f + v.Pos.x / mGeoBuilder->GetWaves()->Width();
+        v.TexC.y = 0.5f - v.Pos.z / mGeoBuilder->GetWaves()->Depth();
 
         currWavesVB->CopyData(i, v);
     }
@@ -473,64 +495,19 @@ void Game::UpdateWaves(const GameTimer& gt)
 // ------------------------------------------------------------------
 void Game::LoadTextures()
 {
-    auto bricksTex = std::make_unique<Texture>();
-    bricksTex->Name = "bricksTex";
-    bricksTex->Filename = L"../../engine/resources/textures/bricks.dds";
-    ThrowIfFailed(DirectX::CreateDDSTextureFromFile12(md3dDevice.Get(),
-        mCommandList.Get(), bricksTex->Filename.c_str(),
-        bricksTex->Resource, bricksTex->UploadHeap));
+    mTextures = make_unique<TextureWrapper>();
+    mTextures->CreateDDSTextureFromFile(md3dDevice, mCommandList, "bricksTex",  L"bricks.dds");
+    mTextures->CreateDDSTextureFromFile(md3dDevice, mCommandList, "waterTex",   L"water1.dds");
+    mTextures->CreateDDSTextureFromFile(md3dDevice, mCommandList, "iceTex",     L"ice.dds");
+    mTextures->CreateDDSTextureFromFile(md3dDevice, mCommandList, "grassTex",   L"grass.dds");
+    mTextures->CreateDDSTextureFromFile(md3dDevice, mCommandList, "whiteTex",   L"white1x1.dds");
 
-    auto waterTex = std::make_unique<Texture>();
-    waterTex->Name = "waterTex";
-    waterTex->Filename = L"../../engine/resources/textures/water1.dds";
-    ThrowIfFailed(DirectX::CreateDDSTextureFromFile12(md3dDevice.Get(),
-        mCommandList.Get(), waterTex->Filename.c_str(),
-        waterTex->Resource, waterTex->UploadHeap));
+    // Crate textures
+    mTextures->CreateDDSTextureFromFile(md3dDevice, mCommandList, "crate01Tex", L"WoodCrate01.dds");
+    mTextures->CreateDDSTextureFromFile(md3dDevice, mCommandList, "crate02Tex", L"WoodCrate02.dds");
 
-    // Crate textures below
-    auto crate01Tex = std::make_unique<Texture>();
-    crate01Tex->Name = "crate01Tex";
-    crate01Tex->Filename = L"../../engine/resources/textures/WoodCrate01.dds";
-    ThrowIfFailed(DirectX::CreateDDSTextureFromFile12(md3dDevice.Get(),
-        mCommandList.Get(), crate01Tex->Filename.c_str(),
-        crate01Tex->Resource, crate01Tex->UploadHeap));
-
-    auto crate02Tex = std::make_unique<Texture>();
-    crate02Tex->Name = "crate02Tex";
-    crate02Tex->Filename = L"../../engine/resources/textures/WoodCrate02.dds";
-    ThrowIfFailed(DirectX::CreateDDSTextureFromFile12(md3dDevice.Get(),
-        mCommandList.Get(), crate02Tex->Filename.c_str(),
-        crate02Tex->Resource, crate02Tex->UploadHeap));
-
-    auto iceTex = std::make_unique<Texture>();
-    iceTex->Name = "iceTex";
-    iceTex->Filename = L"../../engine/resources/textures/ice.dds";
-    ThrowIfFailed(DirectX::CreateDDSTextureFromFile12(md3dDevice.Get(),
-        mCommandList.Get(), iceTex->Filename.c_str(),
-        iceTex->Resource, iceTex->UploadHeap));
-
-    auto grassTex = std::make_unique<Texture>();
-    grassTex->Name = "grassTex";
-    grassTex->Filename = L"../../engine/resources/textures/grass.dds";
-    ThrowIfFailed(DirectX::CreateDDSTextureFromFile12(md3dDevice.Get(),
-        mCommandList.Get(), grassTex->Filename.c_str(),
-        grassTex->Resource, grassTex->UploadHeap));
-
-    auto whiteTex = std::make_unique<Texture>();
-    whiteTex->Name = "whiteTex";
-    whiteTex->Filename = L"../../engine/resources/textures/white1x1.dds";
-    ThrowIfFailed(DirectX::CreateDDSTextureFromFile12(md3dDevice.Get(),
-        mCommandList.Get(), whiteTex->Filename.c_str(),
-        whiteTex->Resource, whiteTex->UploadHeap));
-
-    // Add textures to texture dictionary
-    mTextures[bricksTex->Name] = std::move(bricksTex);
-    mTextures[waterTex->Name] = std::move(waterTex);
-    mTextures[crate01Tex->Name] = std::move(crate01Tex);
-    mTextures[crate02Tex->Name] = std::move(crate02Tex);
-    mTextures[iceTex->Name] = std::move(iceTex);
-    mTextures[grassTex->Name] = std::move(grassTex);
-    mTextures[whiteTex->Name] = std::move(whiteTex);
+    // Skybox texture
+    mTextures->CreateDDSTextureFromFile(md3dDevice, mCommandList, "skyCubeMap", L"skyboxes/room.dds");
 }
 
 // ------------------------------------------------------------------
@@ -554,24 +531,28 @@ void Game::BuildRootSignature()
     //		+ Root descriptor
     //		+ Root constant
 
-    CD3DX12_DESCRIPTOR_RANGE texTable;
-    texTable.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 10, 0, 0);
+    CD3DX12_DESCRIPTOR_RANGE texTable0;
+    texTable0.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 0);
+
+    CD3DX12_DESCRIPTOR_RANGE texTable1;
+    texTable1.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 99, 1, 0);
 
     // Root parameter can be a table, root descriptor or root constants.
-    CD3DX12_ROOT_PARAMETER slotRootParameter[4];
+    CD3DX12_ROOT_PARAMETER slotRootParameter[5];
 
     // Create root CBVs.
     // Performance TIP: Order from most frequent to least frequent.
     slotRootParameter[0].InitAsShaderResourceView(0, 1);
     slotRootParameter[1].InitAsShaderResourceView(1, 1);
     slotRootParameter[2].InitAsConstantBufferView(0);
-    slotRootParameter[3].InitAsDescriptorTable(1, &texTable, D3D12_SHADER_VISIBILITY_PIXEL);
+    slotRootParameter[3].InitAsDescriptorTable(1, &texTable0, D3D12_SHADER_VISIBILITY_PIXEL);
+    slotRootParameter[4].InitAsDescriptorTable(1, &texTable1, D3D12_SHADER_VISIBILITY_PIXEL);
 
 
     auto staticSamplers = GetStaticSamplers();
 
     // A root signature is an array of root parameters.
-    CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(4, slotRootParameter,
+    CD3DX12_ROOT_SIGNATURE_DESC rootSigDesc(5, slotRootParameter,
         (UINT)staticSamplers.size(), staticSamplers.data(),
         D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 
@@ -605,26 +586,21 @@ void Game::BuildDescriptorHeaps()
     // Create the SRV heap.
     //
     mCbvSrvUavDescriptorHeap = make_unique<DescriptorHeapWrapper>();
-    mCbvSrvUavDescriptorHeap->Create(md3dDevice, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 10, true);
+    mCbvSrvUavDescriptorHeap->Create(md3dDevice, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 99, true);
 
     //
     // Fill out the heap with actual descriptors.
     //
-    auto bricksTex = mTextures["bricksTex"]->Resource;
-    auto waterTex = mTextures["waterTex"]->Resource;
-    auto crate01Tex = mTextures["crate01Tex"]->Resource;
-    auto crate02Tex = mTextures["crate02Tex"]->Resource;
-    auto iceTex = mTextures["iceTex"]->Resource;
-    auto grassTex = mTextures["grassTex"]->Resource;
-    auto whiteTex = mTextures["whiteTex"]->Resource;
+    mCbvSrvUavDescriptorHeap->CreateSrvDescriptor(md3dDevice, mTextures->GetTextureResource("bricksTex").Get(),  D3D12_SRV_DIMENSION_TEXTURE2D);
+    mCbvSrvUavDescriptorHeap->CreateSrvDescriptor(md3dDevice, mTextures->GetTextureResource("waterTex").Get(),   D3D12_SRV_DIMENSION_TEXTURE2D);
+    mCbvSrvUavDescriptorHeap->CreateSrvDescriptor(md3dDevice, mTextures->GetTextureResource("crate01Tex").Get(), D3D12_SRV_DIMENSION_TEXTURE2D);
+    mCbvSrvUavDescriptorHeap->CreateSrvDescriptor(md3dDevice, mTextures->GetTextureResource("crate02Tex").Get(), D3D12_SRV_DIMENSION_TEXTURE2D);
+    mCbvSrvUavDescriptorHeap->CreateSrvDescriptor(md3dDevice, mTextures->GetTextureResource("iceTex").Get(),     D3D12_SRV_DIMENSION_TEXTURE2D);
+    mCbvSrvUavDescriptorHeap->CreateSrvDescriptor(md3dDevice, mTextures->GetTextureResource("grassTex").Get(),   D3D12_SRV_DIMENSION_TEXTURE2D);
+    mCbvSrvUavDescriptorHeap->CreateSrvDescriptor(md3dDevice, mTextures->GetTextureResource("whiteTex").Get(),   D3D12_SRV_DIMENSION_TEXTURE2D);
 
-    mCbvSrvUavDescriptorHeap->CreateSrvDescriptor(md3dDevice, bricksTex.Get());
-    mCbvSrvUavDescriptorHeap->CreateSrvDescriptor(md3dDevice, waterTex.Get());
-    mCbvSrvUavDescriptorHeap->CreateSrvDescriptor(md3dDevice, crate01Tex.Get());
-    mCbvSrvUavDescriptorHeap->CreateSrvDescriptor(md3dDevice, crate02Tex.Get());
-    mCbvSrvUavDescriptorHeap->CreateSrvDescriptor(md3dDevice, iceTex.Get());
-    mCbvSrvUavDescriptorHeap->CreateSrvDescriptor(md3dDevice, grassTex.Get());
-    mCbvSrvUavDescriptorHeap->CreateSrvDescriptor(md3dDevice, whiteTex.Get());
+    mSkyTexHeapIndex = mCbvSrvUavDescriptorHeap->GetLastDescIndex();
+    mCbvSrvUavDescriptorHeap->CreateSrvDescriptor(md3dDevice, mTextures->GetTextureResource("skyCubeMap").Get(), D3D12_SRV_DIMENSION_TEXTURECUBE);
 
     GUI::SetupRenderer(md3dDevice.Get(), mCbvSrvUavDescriptorHeap.get());
 }
@@ -653,202 +629,15 @@ void Game::BuildShadersAndInputLayout()
     mShaders["opaquePS"] = DXUtil::CompileShader(L"..\\..\\engine\\engine\\shaders\\Default.hlsl", defines, "PS", "ps_5_1");
     mShaders["alphaTestedPS"] = DXUtil::CompileShader(L"..\\..\\engine\\engine\\shaders\\Default.hlsl", alphaTestDefines, "PS", "ps_5_1");
 
+    mShaders["skyVS"] = DXUtil::CompileShader(L"..\\..\\engine\\engine\\shaders\\Sky.hlsl", nullptr, "VS", "vs_5_1");
+    mShaders["skyPS"] = DXUtil::CompileShader(L"..\\..\\engine\\engine\\shaders\\Sky.hlsl", nullptr, "PS", "ps_5_1");
+
     mInputLayout =
     {
         { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
         { "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
         { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
     };
-}
-
-// ------------------------------------------------------------------
-// Extract the vertex elements from the MeshData grid. Turn the flat
-// grid into a surface representing hills. Generate a color for each
-// vertex based on the vertex altitute (y-coordinate).
-// ------------------------------------------------------------------
-void Game::BuildLandGeometry()
-{
-    GeometryGenerator geoGen;
-    GeometryGenerator::MeshData grid = geoGen.CreateGrid(160.0f, 160.0f, 50, 50);
-
-    //
-    // Extract the vertex elements we are interested and apply the height 
-    // function to each vertex. In addition, color the vertices based on their 
-    // height so we have sandy looking beaches, grassy low hills, and snow 
-    // mountain peaks.
-    //
-
-    std::vector<Vertex> vertices(grid.Vertices.size());
-    for (size_t i = 0; i < grid.Vertices.size(); ++i)
-    {
-        auto& p = grid.Vertices[i].Position;
-        vertices[i].Pos = p;
-        vertices[i].Pos.y = GetHillsHeight(p.x, p.z);
-        vertices[i].Normal = GetHillsNormal(p.x, p.z);
-        vertices[i].TexC = grid.Vertices[i].TexC;
-    }
-
-    const UINT vbByteSize = (UINT)vertices.size() * sizeof(Vertex);
-
-    std::vector<std::uint16_t> indices = grid.GetIndices16();
-    const UINT ibByteSize = (UINT)indices.size() * sizeof(std::uint16_t);
-
-    auto geo = std::make_unique<MeshGeometry>();
-    geo->Name = "landGeo";
-
-    ThrowIfFailed(D3DCreateBlob(vbByteSize, &geo->VertexBufferCPU));
-    CopyMemory(geo->VertexBufferCPU->GetBufferPointer(), vertices.data(), vbByteSize);
-
-    ThrowIfFailed(D3DCreateBlob(ibByteSize, &geo->IndexBufferCPU));
-    CopyMemory(geo->IndexBufferCPU->GetBufferPointer(), indices.data(), ibByteSize);
-
-    geo->VertexBufferGPU = DXUtil::CreateDefaultBuffer(md3dDevice.Get(),
-        mCommandList.Get(), vertices.data(), vbByteSize, geo->VertexBufferUploader);
-
-    geo->IndexBufferGPU = DXUtil::CreateDefaultBuffer(md3dDevice.Get(),
-        mCommandList.Get(), indices.data(), ibByteSize, geo->IndexBufferUploader);
-
-    geo->VertexByteStride = sizeof(Vertex);
-    geo->VertexBufferByteSize = vbByteSize;
-    geo->IndexFormat = DXGI_FORMAT_R16_UINT;
-    geo->IndexBufferByteSize = ibByteSize;
-
-    SubmeshGeometry submesh;
-    submesh.IndexCount = (UINT)indices.size();
-    submesh.StartIndexLocation = 0;
-    submesh.BaseVertexLocation = 0;
-
-    geo->DrawArgs["grid"] = submesh;
-
-    mGeometries["landGeo"] = std::move(geo);
-}
-
-// ------------------------------------------------------------------
-// Build waves geometry buffers, caches the necessary drawing quantities,
-// and draws the objects.
-// ------------------------------------------------------------------
-void Game::BuildWavesGeometry()
-{
-    std::vector<std::uint16_t> indices(3 * mWaves->TriangleCount()); // 3 indices per face
-    assert(mWaves->VertexCount() < 0x0000ffff);
-
-    // Iterate over each quad.
-    int m = mWaves->RowCount();
-    int n = mWaves->ColumnCount();
-    int k = 0;
-    for (int i = 0; i < m - 1; ++i)
-    {
-        for (int j = 0; j < n - 1; ++j)
-        {
-            indices[k] = i * n + j;
-            indices[k + 1] = i * n + j + 1;
-            indices[k + 2] = (i + 1) * n + j;
-
-            indices[k + 3] = (i + 1) * n + j;
-            indices[k + 4] = i * n + j + 1;
-            indices[k + 5] = (i + 1) * n + j + 1;
-
-            k += 6; // next quad
-        }
-    }
-
-    UINT vbByteSize = mWaves->VertexCount() * sizeof(Vertex);
-    UINT ibByteSize = (UINT)indices.size() * sizeof(std::uint16_t);
-
-    auto geo = std::make_unique<MeshGeometry>();
-    geo->Name = "waterGeo";
-
-    // Set dynamically.
-    geo->VertexBufferCPU = nullptr;
-    geo->VertexBufferGPU = nullptr;
-
-    ThrowIfFailed(D3DCreateBlob(ibByteSize, &geo->IndexBufferCPU));
-    CopyMemory(geo->IndexBufferCPU->GetBufferPointer(), indices.data(), ibByteSize);
-
-    geo->IndexBufferGPU = DXUtil::CreateDefaultBuffer(md3dDevice.Get(),
-        mCommandList.Get(), indices.data(), ibByteSize, geo->IndexBufferUploader);
-
-    geo->VertexByteStride = sizeof(Vertex);
-    geo->VertexBufferByteSize = vbByteSize;
-    geo->IndexFormat = DXGI_FORMAT_R16_UINT;
-    geo->IndexBufferByteSize = ibByteSize;
-
-    SubmeshGeometry submesh;
-    submesh.IndexCount = (UINT)indices.size();
-    submesh.StartIndexLocation = 0;
-    submesh.BaseVertexLocation = 0;
-
-    geo->DrawArgs["grid"] = submesh;
-
-    mGeometries["waterGeo"] = std::move(geo);
-}
-
-// ------------------------------------------------------------------
-// Build box geometry.
-// ------------------------------------------------------------------
-void Game::BuildBoxGeometry()
-{
-    GeometryGenerator geoGen;
-    GeometryGenerator::MeshData box = geoGen.CreateBox(8.0f, 8.0f, 8.0f, 3);
-
-    XMFLOAT3 vMinf3(+MathHelper::Infinity, +MathHelper::Infinity, +MathHelper::Infinity);
-    XMFLOAT3 vMaxf3(-MathHelper::Infinity, -MathHelper::Infinity, -MathHelper::Infinity);
-
-    XMVECTOR vMin = XMLoadFloat3(&vMinf3);
-    XMVECTOR vMax = XMLoadFloat3(&vMaxf3);
-
-    std::vector<Vertex> vertices(box.Vertices.size());
-    for (size_t i = 0; i < box.Vertices.size(); ++i)
-    {
-        auto& p = box.Vertices[i].Position;
-        vertices[i].Pos = p;
-        vertices[i].Normal = box.Vertices[i].Normal;
-        vertices[i].TexC = box.Vertices[i].TexC;
-
-        XMVECTOR P = XMLoadFloat3(&p);
-
-        vMin = XMVectorMin(vMin, P);
-        vMax = XMVectorMax(vMax, P);
-    }
-
-    BoundingBox bounds;
-    XMStoreFloat3(&bounds.Center, 0.5f * (vMin + vMax));
-    XMStoreFloat3(&bounds.Extents, 0.5f * (vMax - vMin));
-
-    const UINT vbByteSize = (UINT)vertices.size() * sizeof(Vertex);
-
-    std::vector<std::uint16_t> indices = box.GetIndices16();
-    const UINT ibByteSize = (UINT)indices.size() * sizeof(std::uint16_t);
-
-    auto geo = std::make_unique<MeshGeometry>();
-    geo->Name = "boxGeo";
-
-    ThrowIfFailed(D3DCreateBlob(vbByteSize, &geo->VertexBufferCPU));
-    CopyMemory(geo->VertexBufferCPU->GetBufferPointer(), vertices.data(), vbByteSize);
-
-    ThrowIfFailed(D3DCreateBlob(ibByteSize, &geo->IndexBufferCPU));
-    CopyMemory(geo->IndexBufferCPU->GetBufferPointer(), indices.data(), ibByteSize);
-
-    geo->VertexBufferGPU = DXUtil::CreateDefaultBuffer(md3dDevice.Get(),
-        mCommandList.Get(), vertices.data(), vbByteSize, geo->VertexBufferUploader);
-
-    geo->IndexBufferGPU = DXUtil::CreateDefaultBuffer(md3dDevice.Get(),
-        mCommandList.Get(), indices.data(), ibByteSize, geo->IndexBufferUploader);
-
-    geo->VertexByteStride = sizeof(Vertex);
-    geo->VertexBufferByteSize = vbByteSize;
-    geo->IndexFormat = DXGI_FORMAT_R16_UINT;
-    geo->IndexBufferByteSize = ibByteSize;
-
-    SubmeshGeometry submesh;
-    submesh.IndexCount = (UINT)indices.size();
-    submesh.StartIndexLocation = 0;
-    submesh.BaseVertexLocation = 0;
-    submesh.Bounds = bounds;
-
-    geo->DrawArgs["box"] = submesh;
-
-    mGeometries["boxGeo"] = std::move(geo);
 }
 
 // ------------------------------------------------------------------
@@ -893,12 +682,40 @@ void Game::BuildPSOs()
     // Create an ID3D12PipelineState object using the descriptor we filled out
     ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&opaquePsoDesc, IID_PPV_ARGS(&mPSOs["opaque"])));
 
+
     //
     // PSO for opaque wireframe objects.
     //
     D3D12_GRAPHICS_PIPELINE_STATE_DESC opaqueWireframePsoDesc = opaquePsoDesc;
     opaqueWireframePsoDesc.RasterizerState.FillMode = D3D12_FILL_MODE_WIREFRAME;
     ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&opaqueWireframePsoDesc, IID_PPV_ARGS(&mPSOs["opaque_wireframe"])));
+
+
+    //
+    // PSO for sky.
+    //
+    D3D12_GRAPHICS_PIPELINE_STATE_DESC skyPsoDesc = opaquePsoDesc;
+
+    // The camera is inside the sky sphere, so just turn off culling.
+    skyPsoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;
+
+    // Make sure the depth function is LESS_EQUAL and not just LESS.  
+    // Otherwise, the normalized depth values at z = 1 (NDC) will 
+    // fail the depth test if the depth buffer was cleared to 1.
+    skyPsoDesc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
+    skyPsoDesc.pRootSignature = mRootSignature.Get();
+    skyPsoDesc.VS =
+    {
+        reinterpret_cast<BYTE*>(mShaders["skyVS"]->GetBufferPointer()),
+        mShaders["skyVS"]->GetBufferSize()
+    };
+    skyPsoDesc.PS =
+    {
+        reinterpret_cast<BYTE*>(mShaders["skyPS"]->GetBufferPointer()),
+        mShaders["skyPS"]->GetBufferSize()
+    };
+    ThrowIfFailed(md3dDevice->CreateGraphicsPipelineState(&skyPsoDesc, IID_PPV_ARGS(&mPSOs["sky"])));
+
 
     //
     // PSO for transparent objects
@@ -948,7 +765,7 @@ void Game::BuildFrameResources()
     for (int i = 0; i < gNumFrameResources; ++i)
     {
         mFrameResources.push_back(std::make_unique<FrameResource>(md3dDevice.Get(),
-            1, mInstanceCount, (UINT)mMaterials.size(), mWaves->VertexCount()));
+            1, mInstanceCounts, (UINT)mMaterials.size(), mGeoBuilder->GetWaves()->VertexCount()));
     }
 }
 
@@ -973,7 +790,7 @@ void Game::BuildMaterials()
     water->DiffuseSrvHeapIndex = 1;
     water->DiffuseAlbedo = XMFLOAT4(1.0f, 1.0f, 1.0f, 0.5f);
     water->FresnelR0 = XMFLOAT3(0.2f, 0.2f, 0.2f);
-    water->Roughness = 0.0f;
+    water->Roughness = 0.2f;
 
     auto crate01 = std::make_unique<Material>();
     crate01->Name = "crate01";
@@ -981,23 +798,23 @@ void Game::BuildMaterials()
     crate01->DiffuseSrvHeapIndex = 2;
     crate01->DiffuseAlbedo = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
     crate01->FresnelR0 = XMFLOAT3(0.1f, 0.1f, 0.1f);
-    crate01->Roughness = 0.25f;
+    crate01->Roughness = 0.5f;
 
     auto crate02 = std::make_unique<Material>();
     crate02->Name = "crate02";
-    crate02->MatCBIndex = 2;
-    crate02->DiffuseSrvHeapIndex = 2;
+    crate02->MatCBIndex = 3;
+    crate02->DiffuseSrvHeapIndex = 3;
     crate02->DiffuseAlbedo = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
     crate02->FresnelR0 = XMFLOAT3(0.1f, 0.1f, 0.1f);
-    crate02->Roughness = 0.25f;
+    crate02->Roughness = 0.5f;
 
     auto ice = std::make_unique<Material>();
     ice->Name = "ice";
     ice->MatCBIndex = 4;
     ice->DiffuseSrvHeapIndex = 4;
-    ice->DiffuseAlbedo = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
-    ice->FresnelR0 = XMFLOAT3(0.1f, 0.1f, 0.1f);
-    ice->Roughness = 0.0f;
+    ice->DiffuseAlbedo = XMFLOAT4(0.0f, 0.0f, 0.1f, 1.0f);
+    ice->FresnelR0 = XMFLOAT3(0.98f, 0.97f, 0.95f);
+    ice->Roughness = 0.1f;
 
     auto grass = std::make_unique<Material>();
     grass->Name = "grass";
@@ -1007,13 +824,21 @@ void Game::BuildMaterials()
     grass->FresnelR0 = XMFLOAT3(0.05f, 0.05f, 0.05f);
     grass->Roughness = 0.2f;
 
-    auto white = std::make_unique<Material>();
-    white->Name = "white";
-    white->MatCBIndex = 6;
-    white->DiffuseSrvHeapIndex = 6;
-    white->DiffuseAlbedo = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
-    white->FresnelR0 = XMFLOAT3(0.05f, 0.05f, 0.05f);
-    white->Roughness = 0.5f;
+    auto mirror = std::make_unique<Material>();
+    mirror->Name = "mirror";
+    mirror->MatCBIndex = 6;
+    mirror->DiffuseSrvHeapIndex = 6;
+    mirror->DiffuseAlbedo = XMFLOAT4(0.0f, 0.0f, 0.1f, 1.0f);
+    mirror->FresnelR0 = XMFLOAT3(0.98f, 0.97f, 0.95f);
+    mirror->Roughness = 0.1f;
+
+    auto sky = std::make_unique<Material>();
+    sky->Name = "sky";
+    sky->MatCBIndex = 7;
+    sky->DiffuseSrvHeapIndex = 7;
+    sky->DiffuseAlbedo = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+    sky->FresnelR0 = XMFLOAT3(0.1f, 0.1f, 0.1f);
+    sky->Roughness = 1.0f;
 
     mMaterials["bricks"] = std::move(bricks);
     mMaterials["water"] = std::move(water);
@@ -1021,7 +846,8 @@ void Game::BuildMaterials()
     mMaterials["crate02"] = std::move(crate02);
     mMaterials["ice"] = std::move(ice);
     mMaterials["grass"] = std::move(grass);
-    mMaterials["white"] = std::move(white);
+    mMaterials["mirror"] = std::move(mirror);
+    mMaterials["sky"] = std::move(sky);
 }
 
 // ------------------------------------------------------------------
@@ -1031,12 +857,39 @@ void Game::BuildMaterials()
 // ------------------------------------------------------------------
 void Game::BuildRenderItems()
 {
-    // Box render item
+    UINT instanceBufferID = 0;
+    UINT instanceCount = 0;
+
+    // 1 - Skybox render item
+    auto skyRitem = std::make_unique<RenderItem>();
+    skyRitem->World = MathHelper::Identity4x4();
+    skyRitem->TexTransform = MathHelper::Identity4x4();
+    skyRitem->ObjCBIndex = 0;
+    skyRitem->Mat = mMaterials["sky"].get();
+    skyRitem->Geo = mGeoBuilder->GetMeshGeo("shapeGeo");
+    skyRitem->PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+    skyRitem->IndexCount = skyRitem->Geo->DrawArgs["sphere"].IndexCount;
+    skyRitem->StartIndexLocation = skyRitem->Geo->DrawArgs["sphere"].StartIndexLocation;
+    skyRitem->BaseVertexLocation = skyRitem->Geo->DrawArgs["sphere"].BaseVertexLocation;
+    skyRitem->Bounds = skyRitem->Geo->DrawArgs["sphere"].Bounds;
+
+    // Only one Skybox needed
+    instanceCount = 1;
+    skyRitem->Instances.resize(instanceCount);
+    XMStoreFloat4x4(&skyRitem->Instances[0].World, XMMatrixScaling(5000.0f, 5000.0f, 5000.0f));
+
+    skyRitem->instanceBufferID = instanceBufferID++;
+    mInstanceCounts.push_back(instanceCount);
+    totalInstanceCount += instanceCount;
+    mRitemLayer[(int)RenderLayer::Sky].push_back(skyRitem.get());
+
+
+    // 2 - Box render item
     auto boxRitem = std::make_unique<RenderItem>();
     XMStoreFloat4x4(&boxRitem->World, XMMatrixTranslation(3.0f, 2.0f, -9.0f));
     boxRitem->ObjCBIndex = 2;
     boxRitem->Mat = mMaterials["crate01"].get();
-    boxRitem->Geo = mGeometries["boxGeo"].get();
+    boxRitem->Geo = mGeoBuilder->GetMeshGeo("shapeGeo");
     boxRitem->PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
     boxRitem->InstanceCount = 0;
     boxRitem->IndexCount = boxRitem->Geo->DrawArgs["box"].IndexCount;
@@ -1044,10 +897,15 @@ void Game::BuildRenderItems()
     boxRitem->BaseVertexLocation = boxRitem->Geo->DrawArgs["box"].BaseVertexLocation;
     boxRitem->Bounds = boxRitem->Geo->DrawArgs["box"].Bounds;
 
+    // Random
+    //std::random_device rd;
+    //std::mt19937 mt(rd());
+    //std::uniform_real_distribution<double> urd(0, std::nextafter(6, DBL_MAX));
+
     // Generate instance data for box render item.
     const int n = 5;
-    mInstanceCount = n * n * n;
-    boxRitem->Instances.resize(mInstanceCount);
+    instanceCount = n * n * n;
+    boxRitem->Instances.resize(instanceCount);
 
     float width = 200.0f;
     float height = 200.0f;
@@ -1074,11 +932,15 @@ void Game::BuildRenderItems()
                     x + j * dx, y + i * dy, z + k * dz, 1.0f);
 
                 XMStoreFloat4x4(&boxRitem->Instances[index].TexTransform, XMMatrixScaling(2.0f, 2.0f, 1.0f));
-                boxRitem->Instances[index].MaterialIndex = index % 4 + 2;
+                //boxRitem->Instances[index].MaterialIndex = index % 4 + 2;
+                boxRitem->Instances[index].MaterialIndex = index % 7;
             }
         }
     }
 
+    boxRitem->instanceBufferID = instanceBufferID++;
+    mInstanceCounts.push_back(instanceCount);
+    totalInstanceCount += instanceCount;
     mRitemLayer[(int)RenderLayer::Opaque].push_back(boxRitem.get());
 
     //// Water render item
@@ -1114,6 +976,7 @@ void Game::BuildRenderItems()
     //mAllRitems.push_back(std::move(wavesRitem));
     //mAllRitems.push_back(std::move(gridRitem));
     mAllRitems.push_back(std::move(boxRitem));
+    mAllRitems.push_back(std::move(skyRitem));
 }
 
 #pragma endregion
@@ -1128,7 +991,7 @@ void Game::DrawRenderItems(ID3D12GraphicsCommandList* cmdList, const std::vector
     for (size_t i = 0; i < ritems.size(); ++i)
     {
         auto ri = ritems[i];
-
+        
         cmdList->IASetVertexBuffers(0, 1, &ri->Geo->VertexBufferView());
         cmdList->IASetIndexBuffer(&ri->Geo->IndexBufferView());
         cmdList->IASetPrimitiveTopology(ri->PrimitiveType);
@@ -1136,13 +999,53 @@ void Game::DrawRenderItems(ID3D12GraphicsCommandList* cmdList, const std::vector
         // Set the instance buffer to use for this render-item.
         // For structured buffers, we can bypass the heap and set as a root 
         // descriptor.
-        auto instanceBuffer = mCurrFrameResource->InstanceBuffer->Resource();
+        auto instanceBuffer = mCurrFrameResource->InstanceBuffer[ri->instanceBufferID]->Resource();
         mCommandList->SetGraphicsRootShaderResourceView(0, instanceBuffer->GetGPUVirtualAddress());
 
         cmdList->DrawIndexedInstanced(ri->IndexCount, ri->InstanceCount, ri->StartIndexLocation, ri->BaseVertexLocation, 0);
     }
 }
 
+// ------------------------------------------------------------------
+// Draw customized GUI windows using ImGui framework.
+// ------------------------------------------------------------------
+void Game::DrawGUI()
+{
+    const float PAD = 10.0f;
+    static int corner = 0;
+    ImGuiIO& io = ImGui::GetIO();
+    ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav;
+    if (corner != -1)
+    {
+        const ImGuiViewport* viewport = ImGui::GetMainViewport();
+        ImVec2 work_pos = viewport->WorkPos; // Use work area to avoid menu-bar/task-bar, if any!
+        ImVec2 work_size = viewport->WorkSize;
+        ImVec2 window_pos, window_pos_pivot;
+        window_pos.x = (corner & 1) ? (work_pos.x + work_size.x - PAD) : (work_pos.x + PAD);
+        window_pos.y = (corner & 2) ? (work_pos.y + work_size.y - PAD) : (work_pos.y + PAD);
+        window_pos_pivot.x = (corner & 1) ? 1.0f : 0.0f;
+        window_pos_pivot.y = (corner & 2) ? 1.0f : 0.0f;
+        ImGui::SetNextWindowPos(window_pos, ImGuiCond_Always, window_pos_pivot);
+        window_flags |= ImGuiWindowFlags_NoMove;
+    }
+    ImGui::SetNextWindowBgAlpha(0.35f); // Transparent background
+    if (ImGui::Begin("DEBUG", 0, window_flags))
+    {
+        ImGui::Text("Resolution: %i x %i", mClientWidth, mClientHeight);
+        ImGui::Separator();
+
+        ImGui::Text("Frustum Culling: \n");
+        ImGui::Text("%i objects visible out of %i", totalVisibleInstanceCount, totalInstanceCount);
+        ImGui::Separator();
+
+        if (ImGui::IsMousePosValid())
+            ImGui::Text("Mouse Position: (%.1f,%.1f)", io.MousePos.x, io.MousePos.y);
+        else {
+            ImGui::Text("Mouse Position: <invalid>");
+        }
+    }
+    ImGui::End();
+}
 
 // ------------------------------------------------------------------
 // Define static samplers (2032 max).
@@ -1203,33 +1106,6 @@ std::array<const CD3DX12_STATIC_SAMPLER_DESC, 6> Game::GetStaticSamplers()
         pointWrap, pointClamp,
         linearWrap, linearClamp,
         anisotropicWrap, anisotropicClamp };
-}
-
-
-// ------------------------------------------------------------------
-// Return a value from function y = f(x,z) and apply it to each grid
-// point.
-// ------------------------------------------------------------------
-float Game::GetHillsHeight(float x, float z)const
-{
-    return 0.3f * (z * sinf(0.1f * x) + x * cosf(0.1f * z));
-}
-
-// ------------------------------------------------------------------
-// Return the normal value of each grid point.
-// ------------------------------------------------------------------
-XMFLOAT3 Game::GetHillsNormal(float x, float z)const
-{
-    // n = (-df/dx, 1, -df/dz)
-    XMFLOAT3 n(
-        -0.03f * z * cosf(0.1f * x) - 0.3f * cosf(0.1f * z),
-        1.0f,
-        -0.3f * sinf(0.1f * x) + 0.03f * x * sinf(0.1f * z));
-
-    XMVECTOR unitNormal = XMVector3Normalize(XMLoadFloat3(&n));
-    XMStoreFloat3(&n, unitNormal);
-
-    return n;
 }
 
 

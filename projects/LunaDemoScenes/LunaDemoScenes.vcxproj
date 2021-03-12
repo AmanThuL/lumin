@@ -109,7 +109,9 @@
   <ItemGroup>
     <ClInclude Include="..\..\engine\engine\DescriptorHeapWrapper.h" />
     <ClInclude Include="..\..\engine\engine\FrameResource.h" />
+    <ClInclude Include="..\..\engine\engine\GeoBuilder.h" />
     <ClInclude Include="..\..\engine\engine\RenderItem.h" />
+    <ClInclude Include="..\..\engine\engine\Texture.h" />
     <ClInclude Include="..\..\engine\engine\common\Camera.h" />
     <ClInclude Include="..\..\engine\engine\common\DDSTextureLoader.h" />
     <ClInclude Include="..\..\engine\engine\common\DXCore.h" />
@@ -129,12 +131,13 @@
     <ClInclude Include="..\..\engine\vendor\imgui\imstb_textedit.h" />
     <ClInclude Include="..\..\engine\vendor\imgui\imstb_truetype.h" />
     <ClInclude Include="src\LandAndWavesDemo\Game.h" />
-    <ClInclude Include="src\LandAndWavesDemo\Waves.h" />
     <ClInclude Include="src\lmpch.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\engine\engine\DescriptorHeapWrapper.cpp" />
     <ClCompile Include="..\..\engine\engine\FrameResource.cpp" />
+    <ClCompile Include="..\..\engine\engine\GeoBuilder.cpp" />
+    <ClCompile Include="..\..\engine\engine\Texture.cpp" />
     <ClCompile Include="..\..\engine\engine\common\Camera.cpp" />
     <ClCompile Include="..\..\engine\engine\common\DDSTextureLoader.cpp" />
     <ClCompile Include="..\..\engine\engine\common\DXCore.cpp" />
@@ -151,7 +154,6 @@
     <ClCompile Include="..\..\engine\vendor\imgui\imgui_tables.cpp" />
     <ClCompile Include="..\..\engine\vendor\imgui\imgui_widgets.cpp" />
     <ClCompile Include="src\LandAndWavesDemo\Game.cpp" />
-    <ClCompile Include="src\LandAndWavesDemo\Waves.cpp" />
     <ClCompile Include="src\Main.cpp" />
     <ClCompile Include="src\lmpch.cpp">
       <PrecompiledHeader>Create</PrecompiledHeader>

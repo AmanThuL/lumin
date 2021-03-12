@@ -6,8 +6,6 @@
 
 #pragma once
 
-#include "lmpch.h"
-
 class MathHelper
 {
 public:

@@ -63,4 +63,7 @@ struct RenderItem
 	UINT InstanceCount = 0;
 	UINT StartIndexLocation = 0;
 	int BaseVertexLocation = 0;
+
+	int layerID = 0;
+	UINT instanceBufferID = 0;
 };

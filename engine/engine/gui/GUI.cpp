@@ -19,6 +19,9 @@ void GUI::Init()
     // Setup Dear ImGui style
     ImGui::StyleColorsDark();
     //ImGui::StyleColorsClassic();
+    ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 5.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_GrabRounding, 5.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, { 8, 3 });
 
     //Load Fonts
     //- If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use ImGui::PushFont()/PopFont() to select them.
@@ -27,14 +30,18 @@ void GUI::Init()
     //- The fonts will be rasterized at a given size (w/ oversampling) and stored into a texture when calling ImFontAtlas::Build()/GetTexDataAsXXXX(), which ImGui_ImplXXXX_NewFrame below will call.
     //- Read 'docs/FONTS.md' for more instructions and details.
     //- Remember that in C/C++ if you want to include a backslash \ in a string literal you need to write a double backslash \\ !
-    //io.Fonts->AddFontFromFileTTF("engine/resources/fonts/FiraCode-Retina.ttf", 16.0f);
+    io.Fonts->AddFontFromFileTTF("../../engine/resources/fonts/FiraCode/FiraCode-Retina.ttf", 16.0f);
 
-    //io.ConfigWindowsResizeFromEdges = true;
+    io.ConfigWindowsResizeFromEdges = true;
 }
 
-void GUI::SetupPlatform(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+void GUI::SetupWnd(HWND hwnd)
 {
     ImGui_ImplWin32_Init(hwnd);
+}
+
+void GUI::SetupWndProcHandler(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
     ImGui_ImplWin32_WndProcHandler(hwnd, msg, wParam, lParam);
 
     //mGuiIO& io = ImGui::GetIO();
@@ -55,33 +62,38 @@ void GUI::SetupRenderer(ID3D12Device* device, DescriptorHeapWrapper* descHeap)
         descHeap->GetGPUHandle(descHeap->GetLastDescIndex()));
 }
 
+
 void GUI::StartFrame()
 {
     // Start the Dear ImGui frame
     ImGui_ImplDX12_NewFrame();
     ImGui_ImplWin32_NewFrame();
     ImGui::NewFrame();
-
-    // Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
-    {
-        static int imCounter = 0;
-
-        ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
-
-        ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
-
-        if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
-            imCounter++;
-        ImGui::SameLine();
-        ImGui::Text("counter = %d", imCounter);
-
-        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-        ImGui::End();
-    }
 }
 
 void GUI::RenderFrame(ID3D12GraphicsCommandList* commandList, DescriptorHeapWrapper* descHeap)
 {
+    // Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
+    {
+        if (ImGui::BeginMainMenuBar())
+        {
+            if (ImGui::BeginMenu("File"))
+            {
+                if (ImGui::MenuItem("Open..", "Ctrl+O")) { /* Do stuff */ }
+                if (ImGui::MenuItem("Save", "Ctrl+S")) { /* Do stuff */ }
+                if (ImGui::MenuItem("Close", "Esc")) { active = false; }
+                ImGui::EndMenu();
+            }
+
+            ImGui::SameLine(ImGui::GetWindowWidth() - 160);
+
+            //ImGui::Text("%.2f FPS (%.2f ms)", ImGui::GetIO().Framerate, 1000.0f / ImGui::GetIO().Framerate);
+            ImGui::Text("%.0f FPS (%.2f ms)", fps, mspf);
+
+            ImGui::EndMainMenuBar();
+        }
+    }
+
     // Rendering
     ImGui::Render();
 
@@ -98,4 +110,15 @@ void GUI::ShutDown()
     ImGui_ImplDX12_Shutdown();
     ImGui_ImplWin32_Shutdown();
     ImGui::DestroyContext();
+}
+
+bool GUI::IsWndActive()
+{
+    return active;
+}
+
+void GUI::SetFrameTime(float _fps, float _mspf)
+{
+    fps = _fps;
+    mspf = _mspf;
 }

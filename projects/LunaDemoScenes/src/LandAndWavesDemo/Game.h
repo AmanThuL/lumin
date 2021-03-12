@@ -18,16 +18,14 @@
 #include "common/GeometryGenerator.h"
 #include "common/Camera.h"
 
-#include "DescriptorHeapWrapper.h"
-#include "FrameResource.h"
-#include "RenderItem.h"
-#include "Waves.h"
+#include "GeoBuilder.h"
 
 enum class RenderLayer : int
 {
 	Opaque = 0,
 	Transparent,
 	AlphaTested,
+	Sky,
 	Count
 };
 
@@ -64,19 +62,15 @@ private:
 	void BuildRootSignature();
 	void BuildDescriptorHeaps();
 	void BuildShadersAndInputLayout();
-	void BuildLandGeometry();
-	void BuildWavesGeometry();
-	void BuildBoxGeometry();
 	void BuildPSOs();
 	void BuildFrameResources();
 	void BuildMaterials();
 	void BuildRenderItems();
+
 	void DrawRenderItems(ID3D12GraphicsCommandList* cmdList, const std::vector<RenderItem*>& ritems);
+	void DrawGUI();
 
 	std::array<const CD3DX12_STATIC_SAMPLER_DESC, 6> GetStaticSamplers();
-
-	float GetHillsHeight(float x, float z)const;
-	DirectX::XMFLOAT3 GetHillsNormal(float x, float z)const;
 
 private:
 
@@ -87,33 +81,34 @@ private:
 	Microsoft::WRL::ComPtr<ID3D12RootSignature> mRootSignature = nullptr;
 
 	std::unique_ptr<DescriptorHeapWrapper> mCbvSrvUavDescriptorHeap = nullptr;
+	std::unique_ptr<TextureWrapper> mTextures = nullptr;
+	std::unique_ptr<GeoBuilder> mGeoBuilder = nullptr;
 
 	// Use unordered maps for constant time lookup and reference our objects by 
 	// name.
-	std::unordered_map<std::string, std::unique_ptr<MeshGeometry>> mGeometries;
 	std::unordered_map<std::string, std::unique_ptr<Material>> mMaterials;
-	std::unordered_map<std::string, std::unique_ptr<Texture>> mTextures;
 	std::unordered_map<std::string, Microsoft::WRL::ComPtr<ID3DBlob>> mShaders;
 	std::unordered_map<std::string, Microsoft::WRL::ComPtr<ID3D12PipelineState>> mPSOs;
 
 	std::vector<D3D12_INPUT_ELEMENT_DESC> mInputLayout;
 
+	// Render items.
 	RenderItem* mWavesRitem = nullptr;
-
-	// List of all the render items.
 	std::vector<std::unique_ptr<RenderItem>> mAllRitems;
 
 	// Render items divided by PSO.
 	std::vector<RenderItem*> mRitemLayer[(int)RenderLayer::Count];
 
 	// Instance count
-	UINT mInstanceCount = 0;
+	std::vector<UINT> mInstanceCounts;  // Max instance counts of all render items
+	int totalVisibleInstanceCount = 0;
+	int totalInstanceCount = 0;
 
 	// Application-level frustum culling
 	bool mFrustumCullingEnabled = true;
 	DirectX::BoundingFrustum mCamFrustum;
 
-	std::unique_ptr<Waves> mWaves;
+	UINT mSkyTexHeapIndex = 0;
 
 	PassConstants mMainPassCB;
 

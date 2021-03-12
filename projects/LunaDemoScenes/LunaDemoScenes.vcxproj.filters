@@ -36,7 +36,13 @@
     <ClInclude Include="..\..\engine\engine\FrameResource.h">
       <Filter>engine\engine</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\engine\engine\GeoBuilder.h">
+      <Filter>engine\engine</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\engine\engine\RenderItem.h">
+      <Filter>engine\engine</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\engine\engine\Texture.h">
       <Filter>engine\engine</Filter>
     </ClInclude>
     <ClInclude Include="..\..\engine\engine\common\Camera.h">
@@ -96,9 +102,6 @@
     <ClInclude Include="src\LandAndWavesDemo\Game.h">
       <Filter>src\LandAndWavesDemo</Filter>
     </ClInclude>
-    <ClInclude Include="src\LandAndWavesDemo\Waves.h">
-      <Filter>src\LandAndWavesDemo</Filter>
-    </ClInclude>
     <ClInclude Include="src\lmpch.h">
       <Filter>src</Filter>
     </ClInclude>
@@ -108,6 +111,12 @@
       <Filter>engine\engine</Filter>
     </ClCompile>
     <ClCompile Include="..\..\engine\engine\FrameResource.cpp">
+      <Filter>engine\engine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\engine\engine\GeoBuilder.cpp">
+      <Filter>engine\engine</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\engine\engine\Texture.cpp">
       <Filter>engine\engine</Filter>
     </ClCompile>
     <ClCompile Include="..\..\engine\engine\common\Camera.cpp">
@@ -156,9 +165,6 @@
       <Filter>engine\vendor\imgui</Filter>
     </ClCompile>
     <ClCompile Include="src\LandAndWavesDemo\Game.cpp">
-      <Filter>src\LandAndWavesDemo</Filter>
-    </ClCompile>
-    <ClCompile Include="src\LandAndWavesDemo\Waves.cpp">
       <Filter>src\LandAndWavesDemo</Filter>
     </ClCompile>
     <ClCompile Include="src\Main.cpp">
