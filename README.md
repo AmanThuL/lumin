@@ -1,9 +1,9 @@
-# Lumin
-Lumin is an early-stage C++ based renderer for Windows built with DirectX 12 API. The basic framework is heavily based on Frank D. Luna's DirectX 12 book. For more details, please refer to the ``References`` section.
+# Lumine
+Lumine is an early-stage C++ based renderer for Windows built with DirectX 12 API. The basic framework is heavily based on Frank D. Luna's DirectX 12 book. For more details, please refer to the ``References`` section.
 
 ## Getting Started
 
-Visual Studio 2019 is recommended. Start by cloning the repository with `git clone --recursive https://github.com/AmanThuL/lumin.git`.
+Visual Studio 2019 is recommended. Start by cloning the repository with `git clone --recursive https://github.com/AmanThuL/lumine.git`.
 
 If the repository was cloned __non-recursively__ previously, use `git submodule update --init` to clone the necessary submodules.
 
