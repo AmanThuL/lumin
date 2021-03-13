@@ -1,4 +1,4 @@
-include "vendor/premake/premake_utils/lumin_premake_util.lua"
+include "vendor/premake/premake_utils/lumine_premake_util.lua"
 
 workspace (_RENDERER_NAME)
     configurations { "Debug", "Release" }

@@ -1,7 +1,7 @@
--- lumin_premake_util.lua
+-- lumine_premake_util.lua
 -- utility code shared by premake build scripts
 
-_RENDERER_NAME = "Lumin"
+_RENDERER_NAME = "Lumine"
 _PROJECT_NAME_1 = "LunaDemoScenes"
 _PROJECT_NAME_2 = ""
 
