@@ -11,20 +11,23 @@ The project files are regenerable by using ``GenerateProjectFiles.bat``.
 
 ## Structure
 ```
-├───engine              // Engine framework 
-│   ├───engine            // Engine source code
-|   |   ├───common          // Common engine code
-|   |   ├───gui             // GUI integration
-|   |   └───shaders         // HLSL shaders
-│   ├───resources         // Resouce files (ex. models, textures, fonts, etc.) 
-│   └───vendor            // Third party libs (ex. ImGui, etc.)
-├───projects            // Projects
+├───Engine              // Engine framework 
+│   ├───Engine            // Engine source code
+|   |   ├───Common          // Common engine code
+|   |   ├───GUI             // GUI integration
+|   |   └───Shaders         // HLSL shaders
+│   ├───Resources         // Resource files (ex. models, textures, fonts, etc.) 
+│   └───Externals           // Third party libs (ex. ImGui, etc.)
+├───Projects            // Projects
 |   ├───LunaDemoScenes    // Two demo scenes provided in Frank D. Luna's tutorial book
-|   └───ShadowsScene      // Demo scene to experiment with different real-time shadow techniques
-└───vendor              // Premake 5 executable and a util file
+|   └───Shadows           // Demo scene to experiment with different real-time shadow techniques
+└───Externals           // Premake 5 executable and a util file
 ```
 
 ## References
 - [Introduction to 3D Game Programming with DirectX 12](http://www.d3dcoder.net/d3d12.htm)
 - [ImGui](https://github.com/ocornut/imgui)
 
+## Screenshots
+Shadow mapping with PCF filtering (9 samples)
+![Shadows](https://user-images.githubusercontent.com/42753361/112419564-0055b500-8d02-11eb-8d05-dd4d739ef18e.png)
