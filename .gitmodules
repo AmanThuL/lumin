@@ -1,3 +1,0 @@
-[submodule "engine/vendor/imgui"]
-	path = engine/vendor/imgui
-	url = https://github.com/AmanThuL/imgui.git
