@@ -1,7 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LunaDemoScenes", "projects\LunaDemoScenes\LunaDemoScenes.vcxproj", "{3B42DD43-2710-D149-10A4-4170FC10ADAE}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Projects", "Projects", "{B63FEAB7-A20D-DEBD-8BA1-4EE4770EBA22}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Shadows", "Projects\Shadows\Shadows.vcxproj", "{1ED88DF2-8AB7-0C8E-93CF-9764FF2D73EF}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LunaDemoScenes", "Projects\LunaDemoScenes\LunaDemoScenes.vcxproj", "{3B42DD43-2710-D149-10A4-4170FC10ADAE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -9,6 +13,10 @@ Global
 		Release|x64 = Release|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1ED88DF2-8AB7-0C8E-93CF-9764FF2D73EF}.Debug|x64.ActiveCfg = Debug|x64
+		{1ED88DF2-8AB7-0C8E-93CF-9764FF2D73EF}.Debug|x64.Build.0 = Debug|x64
+		{1ED88DF2-8AB7-0C8E-93CF-9764FF2D73EF}.Release|x64.ActiveCfg = Release|x64
+		{1ED88DF2-8AB7-0C8E-93CF-9764FF2D73EF}.Release|x64.Build.0 = Release|x64
 		{3B42DD43-2710-D149-10A4-4170FC10ADAE}.Debug|x64.ActiveCfg = Debug|x64
 		{3B42DD43-2710-D149-10A4-4170FC10ADAE}.Debug|x64.Build.0 = Debug|x64
 		{3B42DD43-2710-D149-10A4-4170FC10ADAE}.Release|x64.ActiveCfg = Release|x64
@@ -16,5 +24,9 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{1ED88DF2-8AB7-0C8E-93CF-9764FF2D73EF} = {B63FEAB7-A20D-DEBD-8BA1-4EE4770EBA22}
+		{3B42DD43-2710-D149-10A4-4170FC10ADAE} = {B63FEAB7-A20D-DEBD-8BA1-4EE4770EBA22}
 	EndGlobalSection
 EndGlobal

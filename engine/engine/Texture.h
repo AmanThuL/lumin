@@ -7,12 +7,12 @@
 
 #pragma once
 
-#include "common/DXUtil.h"
+#include "Common/DXUtil.h"
 
 class TextureWrapper
 {
 public:
-	TextureWrapper() {}
+	TextureWrapper() = default;
 
 	Microsoft::WRL::ComPtr<ID3D12Resource> GetTextureResource(std::string name);
 

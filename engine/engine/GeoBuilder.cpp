@@ -142,6 +142,8 @@ void GeoBuilder::BuildShapeGeometry(Microsoft::WRL::ComPtr<ID3D12Device> pDevice
     GeometryGenerator geoGen;
     GeometryGenerator::MeshData box = geoGen.CreateBox(8.0f, 8.0f, 8.0f, 3);
     GeometryGenerator::MeshData sphere = geoGen.CreateSphere(0.5f, 20, 20);
+    GeometryGenerator::MeshData grid = geoGen.CreateGrid(20.0f, 30.0f, 60, 40);
+    GeometryGenerator::MeshData cylinder = geoGen.CreateCylinder(0.5f, 0.3f, 3.0f, 20, 20);
 
     //
     // We are concatenating all the geometry into one big vertex/index buffer.  So
@@ -151,10 +153,15 @@ void GeoBuilder::BuildShapeGeometry(Microsoft::WRL::ComPtr<ID3D12Device> pDevice
     // Cache the vertex offsets to each object in the concatenated vertex buffer.
     UINT boxVertexOffset = 0;
     UINT sphereVertexOffset = boxVertexOffset + (UINT)box.Vertices.size();
+    UINT gridVertexOffset = sphereVertexOffset + (UINT)sphere.Vertices.size();
+    UINT cylinderVertexOffset = gridVertexOffset + (UINT)grid.Vertices.size();
 
     // Cache the starting index for each object in the concatenated index buffer.
     UINT boxIndexOffset = 0;
     UINT sphereIndexOffset = boxIndexOffset + (UINT)box.Indices32.size();
+    UINT gridIndexOffset = sphereIndexOffset + (UINT)sphere.Indices32.size();
+    UINT cylinderIndexOffset = gridIndexOffset + (UINT)grid.Indices32.size();
+
 
     SubmeshGeometry boxSubmesh;
     boxSubmesh.IndexCount = (UINT)box.Indices32.size();
@@ -166,14 +173,23 @@ void GeoBuilder::BuildShapeGeometry(Microsoft::WRL::ComPtr<ID3D12Device> pDevice
     sphereSubmesh.StartIndexLocation = sphereIndexOffset;
     sphereSubmesh.BaseVertexLocation = sphereVertexOffset;
 
+    SubmeshGeometry gridSubmesh;
+    gridSubmesh.IndexCount = (UINT)grid.Indices32.size();
+    gridSubmesh.StartIndexLocation = gridIndexOffset;
+    gridSubmesh.BaseVertexLocation = gridVertexOffset;
+
+    SubmeshGeometry cylinderSubmesh;
+    cylinderSubmesh.IndexCount = (UINT)cylinder.Indices32.size();
+    cylinderSubmesh.StartIndexLocation = cylinderIndexOffset;
+    cylinderSubmesh.BaseVertexLocation = cylinderVertexOffset;
+
     //
     // Extract the vertex elements we are interested in and pack the
     // vertices of all the meshes into one vertex buffer.
     //
 
-    auto totalVertexCount =
-        box.Vertices.size() +
-        sphere.Vertices.size();
+    auto totalVertexCount = box.Vertices.size() + sphere.Vertices.size() + 
+        grid.Vertices.size() + cylinder.Vertices.size();
 
     std::vector<Vertex> vertices(totalVertexCount);
 
@@ -224,10 +240,54 @@ void GeoBuilder::BuildShapeGeometry(Microsoft::WRL::ComPtr<ID3D12Device> pDevice
     XMStoreFloat3(&sphereBounds.Extents, 0.5f * (vMax - vMin));
     sphereSubmesh.Bounds = sphereBounds;
 
+    // Get grid's bounding box
+    vMin = XMLoadFloat3(&vMinf3);
+    vMax = XMLoadFloat3(&vMaxf3);
+
+    for (size_t i = 0; i < grid.Vertices.size(); ++i, ++k)
+    {
+        auto& p = grid.Vertices[i].Position;
+        vertices[k].Pos = p;
+        vertices[k].Normal = grid.Vertices[i].Normal;
+        vertices[k].TexC = grid.Vertices[i].TexC;
+
+        XMVECTOR P = XMLoadFloat3(&p);
+
+        vMin = XMVectorMin(vMin, P);
+        vMax = XMVectorMax(vMax, P);
+    }
+    BoundingBox gridBounds;
+    XMStoreFloat3(&gridBounds.Center, 0.5f * (vMin + vMax));
+    XMStoreFloat3(&gridBounds.Extents, 0.5f * (vMax - vMin));
+    gridSubmesh.Bounds = gridBounds;
+
+    // Get cylinder's bounding box
+    vMin = XMLoadFloat3(&vMinf3);
+    vMax = XMLoadFloat3(&vMaxf3);
+
+    for (size_t i = 0; i < cylinder.Vertices.size(); ++i, ++k)
+    {
+        auto& p = cylinder.Vertices[i].Position;
+        vertices[k].Pos = p;
+        vertices[k].Normal = cylinder.Vertices[i].Normal;
+        vertices[k].TexC = cylinder.Vertices[i].TexC;
+
+        XMVECTOR P = XMLoadFloat3(&p);
+
+        vMin = XMVectorMin(vMin, P);
+        vMax = XMVectorMax(vMax, P);
+    }
+    BoundingBox cylinderBounds;
+    XMStoreFloat3(&cylinderBounds.Center, 0.5f * (vMin + vMax));
+    XMStoreFloat3(&cylinderBounds.Extents, 0.5f * (vMax - vMin));
+    cylinderSubmesh.Bounds = cylinderBounds;
+
 
     std::vector<std::uint16_t> indices;
     indices.insert(indices.end(), std::begin(box.GetIndices16()), std::end(box.GetIndices16()));
     indices.insert(indices.end(), std::begin(sphere.GetIndices16()), std::end(sphere.GetIndices16()));
+    indices.insert(indices.end(), std::begin(grid.GetIndices16()), std::end(grid.GetIndices16()));
+    indices.insert(indices.end(), std::begin(cylinder.GetIndices16()), std::end(cylinder.GetIndices16()));
 
 
     const UINT vbByteSize = (UINT)vertices.size() * sizeof(Vertex);
@@ -255,6 +315,8 @@ void GeoBuilder::BuildShapeGeometry(Microsoft::WRL::ComPtr<ID3D12Device> pDevice
 
     geo->DrawArgs["box"] = boxSubmesh;
     geo->DrawArgs["sphere"] = sphereSubmesh;
+    geo->DrawArgs["grid"] = gridSubmesh;
+    geo->DrawArgs["cylinder"] = cylinderSubmesh;
 
     mGeometries[geoName] = std::move(geo);
 }

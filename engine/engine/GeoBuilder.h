@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include "common/GameTimer.h"
+#include "Common/GameTimer.h"
 #include "FrameResource.h"
 
 // Waves Class

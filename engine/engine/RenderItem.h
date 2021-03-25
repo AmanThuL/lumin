@@ -8,9 +8,7 @@
 #pragma once
 
 #include "Common/DXCore.h"
-#include "Common/MathHelper.h"
 #include "Common/UploadBuffer.h"
-#include "Common/GeometryGenerator.h"
 #include "FrameResource.h"
 
 struct RenderItem

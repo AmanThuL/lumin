@@ -62,7 +62,7 @@
       <WarningLevel>Level3</WarningLevel>
       <TreatWarningAsError>true</TreatWarningAsError>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_DEBUG;DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>src;..\..\engine\vendor\imgui;..\..\engine\engine;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src;..\..\Engine\Externals\imgui;..\..\Engine\Engine;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ForcedIncludeFiles>lmpch.h</ForcedIncludeFiles>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <Optimization>Disabled</Optimization>
@@ -85,7 +85,7 @@
       <WarningLevel>Level3</WarningLevel>
       <TreatWarningAsError>true</TreatWarningAsError>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;NDEBUG;PROFILE;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>src;..\..\engine\vendor\imgui;..\..\engine\engine;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src;..\..\Engine\Externals\imgui;..\..\Engine\Engine;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <ForcedIncludeFiles>lmpch.h</ForcedIncludeFiles>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <Optimization>Full</Optimization>
@@ -107,52 +107,56 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\engine\engine\DescriptorHeapWrapper.h" />
-    <ClInclude Include="..\..\engine\engine\FrameResource.h" />
-    <ClInclude Include="..\..\engine\engine\GeoBuilder.h" />
-    <ClInclude Include="..\..\engine\engine\RenderItem.h" />
-    <ClInclude Include="..\..\engine\engine\Texture.h" />
-    <ClInclude Include="..\..\engine\engine\common\Camera.h" />
-    <ClInclude Include="..\..\engine\engine\common\DDSTextureLoader.h" />
-    <ClInclude Include="..\..\engine\engine\common\DXCore.h" />
-    <ClInclude Include="..\..\engine\engine\common\DXUtil.h" />
-    <ClInclude Include="..\..\engine\engine\common\GameTimer.h" />
-    <ClInclude Include="..\..\engine\engine\common\GeometryGenerator.h" />
-    <ClInclude Include="..\..\engine\engine\common\MathHelper.h" />
-    <ClInclude Include="..\..\engine\engine\common\UploadBuffer.h" />
-    <ClInclude Include="..\..\engine\engine\common\d3dx12.h" />
-    <ClInclude Include="..\..\engine\engine\gui\GUI.h" />
-    <ClInclude Include="..\..\engine\vendor\imgui\backends\imgui_impl_dx12.h" />
-    <ClInclude Include="..\..\engine\vendor\imgui\backends\imgui_impl_win32.h" />
-    <ClInclude Include="..\..\engine\vendor\imgui\imconfig.h" />
-    <ClInclude Include="..\..\engine\vendor\imgui\imgui.h" />
-    <ClInclude Include="..\..\engine\vendor\imgui\imgui_internal.h" />
-    <ClInclude Include="..\..\engine\vendor\imgui\imstb_rectpack.h" />
-    <ClInclude Include="..\..\engine\vendor\imgui\imstb_textedit.h" />
-    <ClInclude Include="..\..\engine\vendor\imgui\imstb_truetype.h" />
+    <ClInclude Include="..\..\Engine\Engine\Common\Camera.h" />
+    <ClInclude Include="..\..\Engine\Engine\Common\DDSTextureLoader.h" />
+    <ClInclude Include="..\..\Engine\Engine\Common\DXCore.h" />
+    <ClInclude Include="..\..\Engine\Engine\Common\DXUtil.h" />
+    <ClInclude Include="..\..\Engine\Engine\Common\GameTimer.h" />
+    <ClInclude Include="..\..\Engine\Engine\Common\GeometryGenerator.h" />
+    <ClInclude Include="..\..\Engine\Engine\Common\MathHelper.h" />
+    <ClInclude Include="..\..\Engine\Engine\Common\UploadBuffer.h" />
+    <ClInclude Include="..\..\Engine\Engine\Common\d3dx12.h" />
+    <ClInclude Include="..\..\Engine\Engine\DescriptorHeap.h" />
+    <ClInclude Include="..\..\Engine\Engine\FrameResource.h" />
+    <ClInclude Include="..\..\Engine\Engine\GUI\GUI.h" />
+    <ClInclude Include="..\..\Engine\Engine\GeoBuilder.h" />
+    <ClInclude Include="..\..\Engine\Engine\Material.h" />
+    <ClInclude Include="..\..\Engine\Engine\RenderItem.h" />
+    <ClInclude Include="..\..\Engine\Engine\RenderPasses\ShadowMap.h" />
+    <ClInclude Include="..\..\Engine\Engine\Texture.h" />
+    <ClInclude Include="..\..\Engine\Externals\imgui\backends\imgui_impl_dx12.h" />
+    <ClInclude Include="..\..\Engine\Externals\imgui\backends\imgui_impl_win32.h" />
+    <ClInclude Include="..\..\Engine\Externals\imgui\imconfig.h" />
+    <ClInclude Include="..\..\Engine\Externals\imgui\imgui.h" />
+    <ClInclude Include="..\..\Engine\Externals\imgui\imgui_internal.h" />
+    <ClInclude Include="..\..\Engine\Externals\imgui\imstb_rectpack.h" />
+    <ClInclude Include="..\..\Engine\Externals\imgui\imstb_textedit.h" />
+    <ClInclude Include="..\..\Engine\Externals\imgui\imstb_truetype.h" />
     <ClInclude Include="src\LandAndWavesDemo\Game.h" />
     <ClInclude Include="src\lmpch.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\engine\engine\DescriptorHeapWrapper.cpp" />
-    <ClCompile Include="..\..\engine\engine\FrameResource.cpp" />
-    <ClCompile Include="..\..\engine\engine\GeoBuilder.cpp" />
-    <ClCompile Include="..\..\engine\engine\Texture.cpp" />
-    <ClCompile Include="..\..\engine\engine\common\Camera.cpp" />
-    <ClCompile Include="..\..\engine\engine\common\DDSTextureLoader.cpp" />
-    <ClCompile Include="..\..\engine\engine\common\DXCore.cpp" />
-    <ClCompile Include="..\..\engine\engine\common\DXUtil.cpp" />
-    <ClCompile Include="..\..\engine\engine\common\GameTimer.cpp" />
-    <ClCompile Include="..\..\engine\engine\common\GeometryGenerator.cpp" />
-    <ClCompile Include="..\..\engine\engine\common\MathHelper.cpp" />
-    <ClCompile Include="..\..\engine\engine\gui\GUI.cpp" />
-    <ClCompile Include="..\..\engine\vendor\imgui\backends\imgui_impl_dx12.cpp" />
-    <ClCompile Include="..\..\engine\vendor\imgui\backends\imgui_impl_win32.cpp" />
-    <ClCompile Include="..\..\engine\vendor\imgui\imgui.cpp" />
-    <ClCompile Include="..\..\engine\vendor\imgui\imgui_demo.cpp" />
-    <ClCompile Include="..\..\engine\vendor\imgui\imgui_draw.cpp" />
-    <ClCompile Include="..\..\engine\vendor\imgui\imgui_tables.cpp" />
-    <ClCompile Include="..\..\engine\vendor\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="..\..\Engine\Engine\Common\Camera.cpp" />
+    <ClCompile Include="..\..\Engine\Engine\Common\DDSTextureLoader.cpp" />
+    <ClCompile Include="..\..\Engine\Engine\Common\DXCore.cpp" />
+    <ClCompile Include="..\..\Engine\Engine\Common\DXUtil.cpp" />
+    <ClCompile Include="..\..\Engine\Engine\Common\GameTimer.cpp" />
+    <ClCompile Include="..\..\Engine\Engine\Common\GeometryGenerator.cpp" />
+    <ClCompile Include="..\..\Engine\Engine\Common\MathHelper.cpp" />
+    <ClCompile Include="..\..\Engine\Engine\DescriptorHeap.cpp" />
+    <ClCompile Include="..\..\Engine\Engine\FrameResource.cpp" />
+    <ClCompile Include="..\..\Engine\Engine\GUI\GUI.cpp" />
+    <ClCompile Include="..\..\Engine\Engine\GeoBuilder.cpp" />
+    <ClCompile Include="..\..\Engine\Engine\Material.cpp" />
+    <ClCompile Include="..\..\Engine\Engine\RenderPasses\ShadowMap.cpp" />
+    <ClCompile Include="..\..\Engine\Engine\Texture.cpp" />
+    <ClCompile Include="..\..\Engine\Externals\imgui\backends\imgui_impl_dx12.cpp" />
+    <ClCompile Include="..\..\Engine\Externals\imgui\backends\imgui_impl_win32.cpp" />
+    <ClCompile Include="..\..\Engine\Externals\imgui\imgui.cpp" />
+    <ClCompile Include="..\..\Engine\Externals\imgui\imgui_demo.cpp" />
+    <ClCompile Include="..\..\Engine\Externals\imgui\imgui_draw.cpp" />
+    <ClCompile Include="..\..\Engine\Externals\imgui\imgui_tables.cpp" />
+    <ClCompile Include="..\..\Engine\Externals\imgui\imgui_widgets.cpp" />
     <ClCompile Include="src\LandAndWavesDemo\Game.cpp" />
     <ClCompile Include="src\Main.cpp" />
     <ClCompile Include="src\lmpch.cpp">

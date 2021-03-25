@@ -3,8 +3,6 @@
 //*******************************************************************
 
 #include "DXUtil.h"
-#include <comdef.h>
-#include <fstream>
 
 using Microsoft::WRL::ComPtr;
 

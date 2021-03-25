@@ -2,7 +2,6 @@
 // GameTimer.cpp
 //*******************************************************************
 
-#include <windows.h>
 #include "GameTimer.h"
 
 GameTimer::GameTimer()

@@ -12,13 +12,12 @@
 
 #pragma once
 
-#include "common/DXCore.h"
-#include "common/MathHelper.h"
-#include "common/UploadBuffer.h"
-#include "common/GeometryGenerator.h"
-#include "common/Camera.h"
+#include "Common/DXCore.h"
+#include "Common/UploadBuffer.h"
+#include "Common/Camera.h"
 
 #include "GeoBuilder.h"
+#include "Material.h"
 
 enum class RenderLayer : int
 {
@@ -83,10 +82,10 @@ private:
 	std::unique_ptr<DescriptorHeapWrapper> mCbvSrvUavDescriptorHeap = nullptr;
 	std::unique_ptr<TextureWrapper> mTextures = nullptr;
 	std::unique_ptr<GeoBuilder> mGeoBuilder = nullptr;
+	std::unique_ptr<MaterialWrapper> mMaterials = nullptr;
 
 	// Use unordered maps for constant time lookup and reference our objects by 
 	// name.
-	std::unordered_map<std::string, std::unique_ptr<Material>> mMaterials;
 	std::unordered_map<std::string, Microsoft::WRL::ComPtr<ID3DBlob>> mShaders;
 	std::unordered_map<std::string, Microsoft::WRL::ComPtr<ID3D12PipelineState>> mPSOs;
 

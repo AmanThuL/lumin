@@ -1,0 +1,169 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{1ED88DF2-8AB7-0C8E-93CF-9764FF2D73EF}</ProjectGuid>
+    <IgnoreWarnCompileDuplicatedFilename>true</IgnoreWarnCompileDuplicatedFilename>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>Shadows</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v142</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>true</LinkIncremental>
+    <OutDir>..\..\bin\Debug-windows-x86_64\Shadows\</OutDir>
+    <IntDir>..\..\bin-int\Debug-windows-x86_64\Shadows\</IntDir>
+    <TargetName>Shadows</TargetName>
+    <TargetExt>.exe</TargetExt>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>false</LinkIncremental>
+    <OutDir>..\..\bin\Release-windows-x86_64\Shadows\</OutDir>
+    <IntDir>..\..\bin-int\Release-windows-x86_64\Shadows\</IntDir>
+    <TargetName>Shadows</TargetName>
+    <TargetExt>.exe</TargetExt>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>lmpch.h</PrecompiledHeaderFile>
+      <WarningLevel>Level3</WarningLevel>
+      <TreatWarningAsError>true</TreatWarningAsError>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_DEBUG;DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>src;..\..\Engine\Externals\imgui;..\..\Engine\Engine;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ForcedIncludeFiles>lmpch.h</ForcedIncludeFiles>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <Optimization>Disabled</Optimization>
+      <MinimalRebuild>false</MinimalRebuild>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>d3dcompiler.lib;d3d12.lib;dxgi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <TreatLinkerWarningAsErrors>true</TreatLinkerWarningAsErrors>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>lmpch.h</PrecompiledHeaderFile>
+      <WarningLevel>Level3</WarningLevel>
+      <TreatWarningAsError>true</TreatWarningAsError>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;NDEBUG;PROFILE;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>src;..\..\Engine\Externals\imgui;..\..\Engine\Engine;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <ForcedIncludeFiles>lmpch.h</ForcedIncludeFiles>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <Optimization>Full</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <MinimalRebuild>false</MinimalRebuild>
+      <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalDependencies>d3dcompiler.lib;d3d12.lib;dxgi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <TreatLinkerWarningAsErrors>true</TreatLinkerWarningAsErrors>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\Engine\Engine\Common\Camera.h" />
+    <ClInclude Include="..\..\Engine\Engine\Common\DDSTextureLoader.h" />
+    <ClInclude Include="..\..\Engine\Engine\Common\DXCore.h" />
+    <ClInclude Include="..\..\Engine\Engine\Common\DXUtil.h" />
+    <ClInclude Include="..\..\Engine\Engine\Common\GameTimer.h" />
+    <ClInclude Include="..\..\Engine\Engine\Common\GeometryGenerator.h" />
+    <ClInclude Include="..\..\Engine\Engine\Common\MathHelper.h" />
+    <ClInclude Include="..\..\Engine\Engine\Common\UploadBuffer.h" />
+    <ClInclude Include="..\..\Engine\Engine\Common\d3dx12.h" />
+    <ClInclude Include="..\..\Engine\Engine\DescriptorHeap.h" />
+    <ClInclude Include="..\..\Engine\Engine\FrameResource.h" />
+    <ClInclude Include="..\..\Engine\Engine\GUI\GUI.h" />
+    <ClInclude Include="..\..\Engine\Engine\GeoBuilder.h" />
+    <ClInclude Include="..\..\Engine\Engine\Material.h" />
+    <ClInclude Include="..\..\Engine\Engine\RenderItem.h" />
+    <ClInclude Include="..\..\Engine\Engine\RenderPasses\ShadowMap.h" />
+    <ClInclude Include="..\..\Engine\Engine\Texture.h" />
+    <ClInclude Include="..\..\Engine\Externals\imgui\backends\imgui_impl_dx12.h" />
+    <ClInclude Include="..\..\Engine\Externals\imgui\backends\imgui_impl_win32.h" />
+    <ClInclude Include="..\..\Engine\Externals\imgui\imconfig.h" />
+    <ClInclude Include="..\..\Engine\Externals\imgui\imgui.h" />
+    <ClInclude Include="..\..\Engine\Externals\imgui\imgui_internal.h" />
+    <ClInclude Include="..\..\Engine\Externals\imgui\imstb_rectpack.h" />
+    <ClInclude Include="..\..\Engine\Externals\imgui\imstb_textedit.h" />
+    <ClInclude Include="..\..\Engine\Externals\imgui\imstb_truetype.h" />
+    <ClInclude Include="src\demo\Game.h" />
+    <ClInclude Include="src\lmpch.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\Engine\Engine\Common\Camera.cpp" />
+    <ClCompile Include="..\..\Engine\Engine\Common\DDSTextureLoader.cpp" />
+    <ClCompile Include="..\..\Engine\Engine\Common\DXCore.cpp" />
+    <ClCompile Include="..\..\Engine\Engine\Common\DXUtil.cpp" />
+    <ClCompile Include="..\..\Engine\Engine\Common\GameTimer.cpp" />
+    <ClCompile Include="..\..\Engine\Engine\Common\GeometryGenerator.cpp" />
+    <ClCompile Include="..\..\Engine\Engine\Common\MathHelper.cpp" />
+    <ClCompile Include="..\..\Engine\Engine\DescriptorHeap.cpp" />
+    <ClCompile Include="..\..\Engine\Engine\FrameResource.cpp" />
+    <ClCompile Include="..\..\Engine\Engine\GUI\GUI.cpp" />
+    <ClCompile Include="..\..\Engine\Engine\GeoBuilder.cpp" />
+    <ClCompile Include="..\..\Engine\Engine\Material.cpp" />
+    <ClCompile Include="..\..\Engine\Engine\RenderPasses\ShadowMap.cpp" />
+    <ClCompile Include="..\..\Engine\Engine\Texture.cpp" />
+    <ClCompile Include="..\..\Engine\Externals\imgui\backends\imgui_impl_dx12.cpp" />
+    <ClCompile Include="..\..\Engine\Externals\imgui\backends\imgui_impl_win32.cpp" />
+    <ClCompile Include="..\..\Engine\Externals\imgui\imgui.cpp" />
+    <ClCompile Include="..\..\Engine\Externals\imgui\imgui_demo.cpp" />
+    <ClCompile Include="..\..\Engine\Externals\imgui\imgui_draw.cpp" />
+    <ClCompile Include="..\..\Engine\Externals\imgui\imgui_tables.cpp" />
+    <ClCompile Include="..\..\Engine\Externals\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="src\demo\Game.cpp" />
+    <ClCompile Include="src\demo\Main.cpp" />
+    <ClCompile Include="src\lmpch.cpp">
+      <PrecompiledHeader>Create</PrecompiledHeader>
+    </ClCompile>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

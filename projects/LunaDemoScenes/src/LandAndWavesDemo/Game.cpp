@@ -57,10 +57,6 @@ bool Game::Initialize()
     mGeoBuilder->CreateWaves(128, 128, 1.0f, 0.03f, 4.0f, 0.2f);
     mGeoBuilder->BuildShapeGeometry(md3dDevice, mCommandList, "shapeGeo");
 
-    //BuildLandGeometry();
-    //BuildWavesGeometry();
-    //BuildBoxGeometry();
-
     BuildMaterials();
     BuildRenderItems();
     BuildFrameResources();
@@ -122,11 +118,6 @@ void Game::Update(const GameTimer& gt)
     UpdateMainPassCB(gt);
 
     //UpdateWaves(gt);
-
-    //cout << "Current Camera Position: " 
-    //     << mCamera.GetPosition3f().x << " " 
-    //     << mCamera.GetPosition3f().y << " "
-    //     << mCamera.GetPosition3f().z << endl;
 }
 
 // ------------------------------------------------------------------
@@ -179,11 +170,11 @@ void Game::Draw(const GameTimer& gt)
     // Bind all the materials used in this scene. For structured buffers, we
     // can bypass the heap and set as a root descriptor.
     auto matBuffer = mCurrFrameResource->MaterialBuffer->Resource();
-    mCommandList->SetGraphicsRootShaderResourceView(1, matBuffer->GetGPUVirtualAddress());
+    mCommandList->SetGraphicsRootShaderResourceView(2, matBuffer->GetGPUVirtualAddress());
 
     // Bind per-pass constant buffer. We only need to do this once per-pass.
     auto passCB = mCurrFrameResource->PassCB->Resource();
-    mCommandList->SetGraphicsRootConstantBufferView(2, passCB->GetGPUVirtualAddress());
+    mCommandList->SetGraphicsRootConstantBufferView(0, passCB->GetGPUVirtualAddress());
 
     // Bind the sky cube map.  For our demos, we just use one "world" cube map 
     // representing the environment from far away, so all objects will use the 
@@ -284,10 +275,10 @@ void Game::OnKeyboardInput(const GameTimer& gt)
 void Game::AnimateMaterials(const GameTimer& gt)
 {
     // Scroll the water material texture coordinates.
-    auto waterMat = mMaterials["water"].get();
+    auto waterMat = mMaterials->GetMaterial("water");
 
-    float& tu = waterMat->MatTransform(3, 0);
-    float& tv = waterMat->MatTransform(3, 1);
+    float& tu = waterMat->GetTransform()(3, 0);
+    float& tv = waterMat->GetTransform()(3, 1);
 
     tu += 0.1f * gt.DeltaTime();
     tv += 0.02f * gt.DeltaTime();
@@ -298,11 +289,11 @@ void Game::AnimateMaterials(const GameTimer& gt)
     if (tv >= 1.0f)
         tv -= 1.0f;
 
-    waterMat->MatTransform(3, 0) = tu;
-    waterMat->MatTransform(3, 1) = tv;
+    waterMat->SetTransformRowCol(3, 0, tu);
+    waterMat->SetTransformRowCol(3, 1, tv);
 
     // Material has changed, so need to update cbuffer.
-    waterMat->NumFramesDirty = gNumFrameResources;
+    waterMat->SetNumFramesDirty(gNumFrameResources);
 }
 
 // ------------------------------------------------------------------
@@ -373,26 +364,17 @@ void Game::UpdateInstanceData(const GameTimer& gt)
 void Game::UpdateMaterialBuffer(const GameTimer& gt)
 {
     auto currMaterialBuffer = mCurrFrameResource->MaterialBuffer.get();
-    for (auto& e : mMaterials)
+    for (auto& e : mMaterials->GetTable())
     {
-        // Only update the cbuffer data if the constants have changed.  If the cbuffer
-        // data changes, it needs to be updated for each FrameResource.
-        Material* mat = e.second.get();
-        if (mat->NumFramesDirty > 0)
+        // Only update the cbuffer data if the constants have changed. If the 
+        // cbuffer data changes, it needs to be updated for each FrameResource.
+        auto mat = e.second;
+        if (mat->GetNumFramesDirty() > 0)
         {
-            XMMATRIX matTransform = XMLoadFloat4x4(&mat->MatTransform);
-
-            MaterialData matData;
-            matData.DiffuseAlbedo = mat->DiffuseAlbedo;
-            matData.FresnelR0 = mat->FresnelR0;
-            matData.Roughness = mat->Roughness;
-            XMStoreFloat4x4(&matData.MatTransform, XMMatrixTranspose(matTransform));
-            matData.DiffuseMapIndex = mat->DiffuseSrvHeapIndex;
-
-            currMaterialBuffer->CopyData(mat->MatCBIndex, matData);
+            currMaterialBuffer->CopyData(mat->GetMatCBIndex(), mat->GetMaterialData());
 
             // Next FrameResource need to be updated too.
-            mat->NumFramesDirty--;
+            mat->DecrementNumFramesDirty();
         }
     }
 }
@@ -532,19 +514,19 @@ void Game::BuildRootSignature()
     //		+ Root constant
 
     CD3DX12_DESCRIPTOR_RANGE texTable0;
-    texTable0.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 0);
+    texTable0.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 2, 0, 0);
 
     CD3DX12_DESCRIPTOR_RANGE texTable1;
-    texTable1.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 99, 1, 0);
+    texTable1.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 99, 2, 0);
 
     // Root parameter can be a table, root descriptor or root constants.
     CD3DX12_ROOT_PARAMETER slotRootParameter[5];
 
     // Create root CBVs.
     // Performance TIP: Order from most frequent to least frequent.
-    slotRootParameter[0].InitAsShaderResourceView(0, 1);
-    slotRootParameter[1].InitAsShaderResourceView(1, 1);
-    slotRootParameter[2].InitAsConstantBufferView(0);
+    slotRootParameter[0].InitAsConstantBufferView(0);
+    slotRootParameter[1].InitAsShaderResourceView(0, 1);
+    slotRootParameter[2].InitAsShaderResourceView(1, 1);
     slotRootParameter[3].InitAsDescriptorTable(1, &texTable0, D3D12_SHADER_VISIBILITY_PIXEL);
     slotRootParameter[4].InitAsDescriptorTable(1, &texTable1, D3D12_SHADER_VISIBILITY_PIXEL);
 
@@ -591,16 +573,17 @@ void Game::BuildDescriptorHeaps()
     //
     // Fill out the heap with actual descriptors.
     //
-    mCbvSrvUavDescriptorHeap->CreateSrvDescriptor(md3dDevice, mTextures->GetTextureResource("bricksTex").Get(),  D3D12_SRV_DIMENSION_TEXTURE2D);
-    mCbvSrvUavDescriptorHeap->CreateSrvDescriptor(md3dDevice, mTextures->GetTextureResource("waterTex").Get(),   D3D12_SRV_DIMENSION_TEXTURE2D);
-    mCbvSrvUavDescriptorHeap->CreateSrvDescriptor(md3dDevice, mTextures->GetTextureResource("crate01Tex").Get(), D3D12_SRV_DIMENSION_TEXTURE2D);
-    mCbvSrvUavDescriptorHeap->CreateSrvDescriptor(md3dDevice, mTextures->GetTextureResource("crate02Tex").Get(), D3D12_SRV_DIMENSION_TEXTURE2D);
-    mCbvSrvUavDescriptorHeap->CreateSrvDescriptor(md3dDevice, mTextures->GetTextureResource("iceTex").Get(),     D3D12_SRV_DIMENSION_TEXTURE2D);
-    mCbvSrvUavDescriptorHeap->CreateSrvDescriptor(md3dDevice, mTextures->GetTextureResource("grassTex").Get(),   D3D12_SRV_DIMENSION_TEXTURE2D);
-    mCbvSrvUavDescriptorHeap->CreateSrvDescriptor(md3dDevice, mTextures->GetTextureResource("whiteTex").Get(),   D3D12_SRV_DIMENSION_TEXTURE2D);
+    mCbvSrvUavDescriptorHeap->CreateSrvDescriptor(md3dDevice, mTextures->GetTextureResource("bricksTex").Get(), D3D12_SRV_DIMENSION_TEXTURE2D, DIFFUSE_MAP);
+    mCbvSrvUavDescriptorHeap->CreateSrvDescriptor(md3dDevice, mTextures->GetTextureResource("waterTex").Get(), D3D12_SRV_DIMENSION_TEXTURE2D, DIFFUSE_MAP);
+    mCbvSrvUavDescriptorHeap->CreateSrvDescriptor(md3dDevice, mTextures->GetTextureResource("crate01Tex").Get(), D3D12_SRV_DIMENSION_TEXTURE2D, DIFFUSE_MAP);
+    mCbvSrvUavDescriptorHeap->CreateSrvDescriptor(md3dDevice, mTextures->GetTextureResource("crate02Tex").Get(), D3D12_SRV_DIMENSION_TEXTURE2D, DIFFUSE_MAP);
+    mCbvSrvUavDescriptorHeap->CreateSrvDescriptor(md3dDevice, mTextures->GetTextureResource("iceTex").Get(), D3D12_SRV_DIMENSION_TEXTURE2D, DIFFUSE_MAP);
+    mCbvSrvUavDescriptorHeap->CreateSrvDescriptor(md3dDevice, mTextures->GetTextureResource("grassTex").Get(), D3D12_SRV_DIMENSION_TEXTURE2D, DIFFUSE_MAP);
+    mCbvSrvUavDescriptorHeap->CreateSrvDescriptor(md3dDevice, mTextures->GetTextureResource("whiteTex").Get(), D3D12_SRV_DIMENSION_TEXTURE2D, DIFFUSE_MAP);
 
+    // Sky cube map
     mSkyTexHeapIndex = mCbvSrvUavDescriptorHeap->GetLastDescIndex();
-    mCbvSrvUavDescriptorHeap->CreateSrvDescriptor(md3dDevice, mTextures->GetTextureResource("skyCubeMap").Get(), D3D12_SRV_DIMENSION_TEXTURECUBE);
+    mCbvSrvUavDescriptorHeap->CreateSrvDescriptor(md3dDevice, mTextures->GetTextureResource("skyCubeMap").Get(), D3D12_SRV_DIMENSION_TEXTURECUBE, CUBE_MAP);
 
     GUI::SetupRenderer(md3dDevice.Get(), mCbvSrvUavDescriptorHeap.get());
 }
@@ -625,12 +608,13 @@ void Game::BuildShadersAndInputLayout()
         NULL, NULL
     };
 
-    mShaders["standardVS"] = DXUtil::CompileShader(L"..\\..\\engine\\engine\\shaders\\Default.hlsl", nullptr, "VS", "vs_5_1");
-    mShaders["opaquePS"] = DXUtil::CompileShader(L"..\\..\\engine\\engine\\shaders\\Default.hlsl", defines, "PS", "ps_5_1");
-    mShaders["alphaTestedPS"] = DXUtil::CompileShader(L"..\\..\\engine\\engine\\shaders\\Default.hlsl", alphaTestDefines, "PS", "ps_5_1");
+    const std::wstring shaderFolderPath = L"..\\..\\Engine\\Engine\\Shaders\\";
 
-    mShaders["skyVS"] = DXUtil::CompileShader(L"..\\..\\engine\\engine\\shaders\\Sky.hlsl", nullptr, "VS", "vs_5_1");
-    mShaders["skyPS"] = DXUtil::CompileShader(L"..\\..\\engine\\engine\\shaders\\Sky.hlsl", nullptr, "PS", "ps_5_1");
+    mShaders["standardVS"] = DXUtil::CompileShader(shaderFolderPath + L"Default.hlsl", nullptr, "VS", "vs_5_1");
+    mShaders["opaquePS"] = DXUtil::CompileShader(shaderFolderPath + L"Default.hlsl", nullptr, "PS", "ps_5_1");
+
+    mShaders["skyVS"] = DXUtil::CompileShader(shaderFolderPath + L"Sky.hlsl", nullptr, "VS", "vs_5_1");
+    mShaders["skyPS"] = DXUtil::CompileShader(shaderFolderPath + L"Sky.hlsl", nullptr, "PS", "ps_5_1");
 
     mInputLayout =
     {
@@ -765,7 +749,7 @@ void Game::BuildFrameResources()
     for (int i = 0; i < gNumFrameResources; ++i)
     {
         mFrameResources.push_back(std::make_unique<FrameResource>(md3dDevice.Get(),
-            1, mInstanceCounts, (UINT)mMaterials.size(), mGeoBuilder->GetWaves()->VertexCount()));
+            1, mInstanceCounts, mMaterials->GetSize(), mGeoBuilder->GetWaves()->VertexCount()));
     }
 }
 
@@ -774,80 +758,72 @@ void Game::BuildFrameResources()
 // ------------------------------------------------------------------
 void Game::BuildMaterials()
 {
-    auto bricks = std::make_unique<Material>();
-    bricks->Name = "bricks";
-    bricks->MatCBIndex = 0;
-    bricks->DiffuseSrvHeapIndex = 0;
-    bricks->DiffuseAlbedo = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
-    bricks->FresnelR0 = XMFLOAT3(0.02f, 0.02f, 0.02f);
-    bricks->Roughness = 0.1f;
+    // Initialize material wrapper
+    mMaterials = std::make_unique<MaterialWrapper>();
 
-    // This is not a good water material definition, but we do not have all the rendering
-    // tools we need (transparency, environment reflection), so we fake it for now.
-    auto water = std::make_unique<Material>();
-    water->Name = "water";
-    water->MatCBIndex = 1;
-    water->DiffuseSrvHeapIndex = 1;
-    water->DiffuseAlbedo = XMFLOAT4(1.0f, 1.0f, 1.0f, 0.5f);
-    water->FresnelR0 = XMFLOAT3(0.2f, 0.2f, 0.2f);
-    water->Roughness = 0.2f;
+    auto bricks = Material::Create("bricks");
+    bricks->SetMatCBIndex(0);
+    bricks->SetDiffuseSrvHeapIndex(0);
+    bricks->SetDiffuseAlbedo(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f));
+    bricks->SetFresnel(XMFLOAT3(0.02f, 0.02f, 0.02f));
+    bricks->SetRoughness(0.1f);
+    mMaterials->AddMaterial(bricks);
 
-    auto crate01 = std::make_unique<Material>();
-    crate01->Name = "crate01";
-    crate01->MatCBIndex = 2;
-    crate01->DiffuseSrvHeapIndex = 2;
-    crate01->DiffuseAlbedo = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
-    crate01->FresnelR0 = XMFLOAT3(0.1f, 0.1f, 0.1f);
-    crate01->Roughness = 0.5f;
+    auto water = Material::Create("water");
+    water->SetMatCBIndex(1);
+    water->SetDiffuseSrvHeapIndex(1);
+    water->SetDiffuseAlbedo(XMFLOAT4(1.0f, 1.0f, 1.0f, 0.5f));
+    water->SetFresnel(XMFLOAT3(0.2f, 0.2f, 0.2f));
+    water->SetRoughness(0.2f);
+    mMaterials->AddMaterial(water);
 
-    auto crate02 = std::make_unique<Material>();
-    crate02->Name = "crate02";
-    crate02->MatCBIndex = 3;
-    crate02->DiffuseSrvHeapIndex = 3;
-    crate02->DiffuseAlbedo = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
-    crate02->FresnelR0 = XMFLOAT3(0.1f, 0.1f, 0.1f);
-    crate02->Roughness = 0.5f;
+    auto crate01 = Material::Create("crate01");
+    crate01->SetMatCBIndex(2);
+    crate01->SetDiffuseSrvHeapIndex(2);
+    crate01->SetDiffuseAlbedo(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f));
+    crate01->SetFresnel(XMFLOAT3(0.1f, 0.1f, 0.1f));
+    crate01->SetRoughness(0.5f);
+    mMaterials->AddMaterial(crate01);
 
-    auto ice = std::make_unique<Material>();
-    ice->Name = "ice";
-    ice->MatCBIndex = 4;
-    ice->DiffuseSrvHeapIndex = 4;
-    ice->DiffuseAlbedo = XMFLOAT4(0.0f, 0.0f, 0.1f, 1.0f);
-    ice->FresnelR0 = XMFLOAT3(0.98f, 0.97f, 0.95f);
-    ice->Roughness = 0.1f;
+    auto crate02 = Material::Create("crate02");
+    crate02->SetMatCBIndex(3);
+    crate02->SetDiffuseSrvHeapIndex(3);
+    crate02->SetDiffuseAlbedo(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f));
+    crate02->SetFresnel(XMFLOAT3(0.1f, 0.1f, 0.1f));
+    crate02->SetRoughness(0.5f);
+    mMaterials->AddMaterial(crate02);
 
-    auto grass = std::make_unique<Material>();
-    grass->Name = "grass";
-    grass->MatCBIndex = 5;
-    grass->DiffuseSrvHeapIndex = 5;
-    grass->DiffuseAlbedo = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
-    grass->FresnelR0 = XMFLOAT3(0.05f, 0.05f, 0.05f);
-    grass->Roughness = 0.2f;
+    auto ice = Material::Create("ice");
+    ice->SetMatCBIndex(4);
+    ice->SetDiffuseSrvHeapIndex(4);
+    ice->SetDiffuseAlbedo(XMFLOAT4(0.0f, 0.0f, 0.1f, 1.0f));
+    ice->SetFresnel(XMFLOAT3(0.98f, 0.97f, 0.95f));
+    ice->SetRoughness(0.1f);
+    mMaterials->AddMaterial(ice);
 
-    auto mirror = std::make_unique<Material>();
-    mirror->Name = "mirror";
-    mirror->MatCBIndex = 6;
-    mirror->DiffuseSrvHeapIndex = 6;
-    mirror->DiffuseAlbedo = XMFLOAT4(0.0f, 0.0f, 0.1f, 1.0f);
-    mirror->FresnelR0 = XMFLOAT3(0.98f, 0.97f, 0.95f);
-    mirror->Roughness = 0.1f;
+    auto grass = Material::Create("grass");
+    grass->SetMatCBIndex(5);
+    grass->SetDiffuseSrvHeapIndex(5);
+    grass->SetDiffuseAlbedo(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f));
+    grass->SetFresnel(XMFLOAT3(0.05f, 0.05f, 0.05f));
+    grass->SetRoughness(0.2f);
+    mMaterials->AddMaterial(grass);
 
-    auto sky = std::make_unique<Material>();
-    sky->Name = "sky";
-    sky->MatCBIndex = 7;
-    sky->DiffuseSrvHeapIndex = 7;
-    sky->DiffuseAlbedo = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
-    sky->FresnelR0 = XMFLOAT3(0.1f, 0.1f, 0.1f);
-    sky->Roughness = 1.0f;
+    auto mirror = Material::Create("mirror");
+    mirror->SetMatCBIndex(6);
+    mirror->SetDiffuseSrvHeapIndex(6);
+    mirror->SetDiffuseAlbedo(XMFLOAT4(0.0f, 0.0f, 0.1f, 1.0f));
+    mirror->SetFresnel(XMFLOAT3(0.98f, 0.97f, 0.95f));
+    mirror->SetRoughness(0.1f);
+    mMaterials->AddMaterial(mirror);
 
-    mMaterials["bricks"] = std::move(bricks);
-    mMaterials["water"] = std::move(water);
-    mMaterials["crate01"] = std::move(crate01);
-    mMaterials["crate02"] = std::move(crate02);
-    mMaterials["ice"] = std::move(ice);
-    mMaterials["grass"] = std::move(grass);
-    mMaterials["mirror"] = std::move(mirror);
-    mMaterials["sky"] = std::move(sky);
+    auto sky = Material::Create("sky");
+    sky->SetMatCBIndex(7);
+    sky->SetDiffuseSrvHeapIndex(7);
+    sky->SetDiffuseAlbedo(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f));
+    sky->SetFresnel(XMFLOAT3(0.1f, 0.1f, 0.1f));
+    sky->SetRoughness(1.0f);
+    mMaterials->AddMaterial(sky);
 }
 
 // ------------------------------------------------------------------
@@ -865,7 +841,7 @@ void Game::BuildRenderItems()
     skyRitem->World = MathHelper::Identity4x4();
     skyRitem->TexTransform = MathHelper::Identity4x4();
     skyRitem->ObjCBIndex = 0;
-    skyRitem->Mat = mMaterials["sky"].get();
+    skyRitem->Mat = mMaterials->GetMaterial("sky").get();
     skyRitem->Geo = mGeoBuilder->GetMeshGeo("shapeGeo");
     skyRitem->PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
     skyRitem->IndexCount = skyRitem->Geo->DrawArgs["sphere"].IndexCount;
@@ -876,7 +852,7 @@ void Game::BuildRenderItems()
     // Only one Skybox needed
     instanceCount = 1;
     skyRitem->Instances.resize(instanceCount);
-    XMStoreFloat4x4(&skyRitem->Instances[0].World, XMMatrixScaling(5000.0f, 5000.0f, 5000.0f));
+    XMStoreFloat4x4(&skyRitem->Instances[0].World, XMMatrixScaling(4000.0f, 4000.0f, 4000.0f));
 
     skyRitem->instanceBufferID = instanceBufferID++;
     mInstanceCounts.push_back(instanceCount);
@@ -888,7 +864,7 @@ void Game::BuildRenderItems()
     auto boxRitem = std::make_unique<RenderItem>();
     XMStoreFloat4x4(&boxRitem->World, XMMatrixTranslation(3.0f, 2.0f, -9.0f));
     boxRitem->ObjCBIndex = 2;
-    boxRitem->Mat = mMaterials["crate01"].get();
+    boxRitem->Mat = mMaterials->GetMaterial("crate01").get();
     boxRitem->Geo = mGeoBuilder->GetMeshGeo("shapeGeo");
     boxRitem->PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
     boxRitem->InstanceCount = 0;
@@ -1000,7 +976,7 @@ void Game::DrawRenderItems(ID3D12GraphicsCommandList* cmdList, const std::vector
         // For structured buffers, we can bypass the heap and set as a root 
         // descriptor.
         auto instanceBuffer = mCurrFrameResource->InstanceBuffer[ri->instanceBufferID]->Resource();
-        mCommandList->SetGraphicsRootShaderResourceView(0, instanceBuffer->GetGPUVirtualAddress());
+        mCommandList->SetGraphicsRootShaderResourceView(1, instanceBuffer->GetGPUVirtualAddress());
 
         cmdList->DrawIndexedInstanced(ri->IndexCount, ri->InstanceCount, ri->StartIndexLocation, ri->BaseVertexLocation, 0);
     }

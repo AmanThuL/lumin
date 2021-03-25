@@ -1,9 +1,9 @@
-include "vendor/premake/premake_utils/lumine_premake_util.lua"
+include "Externals/premake/premake_utils/lumine_premake_util.lua"
 
 workspace (_RENDERER_NAME)
     configurations { "Debug", "Release" }
     platforms { "x64" }
-    startproject (_PROJECT_NAME_1)
+    startproject (_PROJECT_NAME_2)
 
     filter "platforms:x64"
         system "Windows"
@@ -16,7 +16,9 @@ workspace (_RENDERER_NAME)
 
 -- Include directories relative to root folder (solution directory)
 IncludeDir = {}
-IncludeDir["ImGui"] = "%{wks.location}/engine/vendor/imgui"
-IncludeDir["Engine"] = "%{wks.location}/engine/engine"
+IncludeDir["ImGui"] = "%{wks.location}/Engine/Externals/imgui"
+IncludeDir["Engine"] = "%{wks.location}/Engine/Engine"
 
-include ("projects/" .. _PROJECT_NAME_1)
+group "Projects"
+	include ("Projects/" .. _PROJECT_NAME_1)
+	include ("Projects/" .. _PROJECT_NAME_2)

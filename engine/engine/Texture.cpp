@@ -18,7 +18,7 @@ void TextureWrapper::CreateDDSTextureFromFile(ComPtr<ID3D12Device> pDevice, ComP
 {
     auto newTex = std::make_unique<Texture>();
     newTex->Name = name;
-    newTex->Filename = L"../../engine/resources/textures/" + fileName;
+    newTex->Filename = L"../../Engine/Resources/Textures/" + fileName;
     ThrowIfFailed(DirectX::CreateDDSTextureFromFile12(pDevice.Get(),
         pCommandList.Get(), newTex->Filename.c_str(),
         newTex->Resource, newTex->UploadHeap));

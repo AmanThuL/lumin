@@ -7,9 +7,11 @@
 
 #pragma once
 
-#include "common/DXUtil.h"
-#include "common/MathHelper.h"
-#include "common/UploadBuffer.h"
+#include "Common/DXUtil.h"
+#include "Common/MathHelper.h"
+#include "Common/UploadBuffer.h"
+
+#include "Material.h"
 
 // Stores data that varies per-instance.
 struct InstanceData
@@ -31,8 +33,10 @@ struct PassConstants
     DirectX::XMFLOAT4X4 InvProj = MathHelper::Identity4x4();
     DirectX::XMFLOAT4X4 ViewProj = MathHelper::Identity4x4();
     DirectX::XMFLOAT4X4 InvViewProj = MathHelper::Identity4x4();
+    DirectX::XMFLOAT4X4 ShadowTransform = MathHelper::Identity4x4();
     DirectX::XMFLOAT3 EyePosW = { 0.0f, 0.0f, 0.0f };
     float cbPerObjectPad1 = 0.0f;
+
     DirectX::XMFLOAT2 RenderTargetSize = { 0.0f, 0.0f };
     DirectX::XMFLOAT2 InvRenderTargetSize = { 0.0f, 0.0f };
     float NearZ = 0.0f;
@@ -52,21 +56,6 @@ struct PassConstants
     // indices [NUM_DIR_LIGHTS+NUM_POINT_LIGHTS, NUM_DIR_LIGHTS+NUM_POINT_LIGHT+NUM_SPOT_LIGHTS)
     // are spot lights for a maximum of MaxLights per object.
     Light Lights[MaxLights];
-};
-
-struct MaterialData
-{
-    DirectX::XMFLOAT4 DiffuseAlbedo = { 1.0f, 1.0f, 1.0f, 1.0f };
-    DirectX::XMFLOAT3 FresnelR0 = { 0.01f, 0.01f, 0.01f };
-    float Roughness = 64.0f;
-
-    // Used in texture mapping.
-    DirectX::XMFLOAT4X4 MatTransform = MathHelper::Identity4x4();
-
-    UINT DiffuseMapIndex = 0;
-    UINT MaterialPad0;
-    UINT MaterialPad1;
-    UINT MaterialPad2;
 };
 
 struct Vertex

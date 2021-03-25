@@ -17,8 +17,8 @@
 
 #include "DXUtil.h"
 #include "GameTimer.h"
-#include "gui/GUI.h"
-#include "DescriptorHeapWrapper.h"
+#include "GUI/GUI.h"
+#include "DescriptorHeap.h"
 #include "FrameResource.h"
 #include "RenderItem.h"
 #include "Texture.h"

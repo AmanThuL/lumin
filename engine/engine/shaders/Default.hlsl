@@ -52,7 +52,8 @@ struct VertexOut
 	//  |    |                |
 	//  v    v                v
     float4 PosH         : SV_POSITION;  // XYZW position (System Value Position)
-    float3 PosW         : POSITION;     // XYZ position (World Space)
+    float4 ShadowPosH   : POSITION0;
+    float3 PosW         : POSITION1;     // XYZ position (World Space)
     float3 NormalW		: NORMAL;		// Normal (World Space)
     float2 TexC         : TEXCOORD;     // Texture coordinates (u,v)
     
@@ -91,13 +92,16 @@ VertexOut VS(VertexIn vin, uint instanceID : SV_InstanceID)
     // Assumes nonuniform scaling; otherwise, need to use inverse-transpose of 
     // world matrix.
     vout.NormalW = mul(vin.NormalL, (float3x3)world);
-
+    
     // Transform to homogeneous clip space.
     vout.PosH = mul(posW, gViewProj);
 	
 	// Output vertex attributes for interpolation across triangle.
     float4 texC = mul(float4(vin.TexC, 0.0f, 1.0f), texTransform);
     vout.TexC = mul(texC, matData.MatTransform).xy;
+    
+    // Generate projective tex-coords to project shadow map onto scene.
+    vout.ShadowPosH = mul(posW, gShadowTransform);
 
     return vout;
 }
@@ -124,7 +128,7 @@ float4 PS(VertexOut pin) : SV_Target
     uint diffuseTexIndex = matData.DiffuseMapIndex;
     
     // Dynamically look up the texture in the array.
-    diffuseAlbedo *= gDiffuseMap[diffuseTexIndex].Sample(gsamAnisotropicWrap, pin.TexC);
+    diffuseAlbedo *= gTextureMaps[diffuseTexIndex].Sample(gsamAnisotropicWrap, pin.TexC);
 	
 #ifdef ALPHA_TEST
 	// Discard pixel if texture alpha < 0.1.  We do this test as soon 
@@ -144,9 +148,12 @@ float4 PS(VertexOut pin) : SV_Target
     // Light terms.
     float4 ambient = gAmbientLight * diffuseAlbedo;
 
+    // Only the first light casts a shadow.
+    float3 shadowFactor = float3(1.0f, 1.0f, 1.0f);
+    shadowFactor[0] = CalcShadowFactor(pin.ShadowPosH);
+    
     const float shininess = 1.0f - roughness;
     Material mat = { diffuseAlbedo, fresnelR0, shininess };
-    float3 shadowFactor = 1.0f;
     float4 directLight = ComputeLighting(gLights, mat, pin.PosW,
         pin.NormalW, toEyeW, shadowFactor);
 
