@@ -1,10 +1,8 @@
 //*******************************************************************
-// Copyright Frank Luna (C) 2011 All Rights Reserved.
-// 
 // GeoBuilder.h:
 //
 // Wrapper class for building implicit geometries such as land, waves,
-// and box.
+// primitive shapes, and model from .txt files.
 //*******************************************************************
 
 #pragma once
@@ -199,6 +197,7 @@ public:
 	void BuildLandGeometry(Microsoft::WRL::ComPtr<ID3D12Device> pDevice, Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> pCommandList, std::string geoName);
 	void BuildWavesGeometry(Microsoft::WRL::ComPtr<ID3D12Device> pDevice, Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> pCommandList, std::string geoName);
 	void BuildShapeGeometry(Microsoft::WRL::ComPtr<ID3D12Device> pDevice, Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> pCommandList, std::string geoName);
+	void BuildGeometryFromText(const std::string& path, Microsoft::WRL::ComPtr<ID3D12Device> pDevice, Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> pCommandList, std::string geoName);
 
 protected:
 	float GetHillsHeight(float x, float z)const;

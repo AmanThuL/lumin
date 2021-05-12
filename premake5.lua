@@ -16,9 +16,9 @@ workspace (_RENDERER_NAME)
 
 -- Include directories relative to root folder (solution directory)
 IncludeDir = {}
-IncludeDir["ImGui"] = "%{wks.location}/Engine/Externals/imgui"
+IncludeDir["imgui"] = "%{wks.location}/Engine/Externals/imgui"
+IncludeDir["assimp"] = "%{wks.location}/Engine/Externals/assimp/include"
 IncludeDir["Engine"] = "%{wks.location}/Engine/Engine"
 
 group "Projects"
 	include ("Projects/" .. _PROJECT_NAME_1)
-	include ("Projects/" .. _PROJECT_NAME_2)

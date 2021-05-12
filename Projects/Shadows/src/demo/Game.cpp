@@ -71,6 +71,7 @@ bool Game::Initialize()
     mGeoBuilder = make_unique<GeoBuilder>();
     mGeoBuilder->CreateWaves(128, 128, 1.0f, 0.03f, 4.0f, 0.2f);
     mGeoBuilder->BuildShapeGeometry(md3dDevice, mCommandList, "shapeGeo");
+    mGeoBuilder->BuildGeometryFromText("../../Engine/Resources/Models/car.txt", md3dDevice, mCommandList, "carModel");
 
     BuildMaterials();
     BuildRenderItems();
@@ -189,14 +190,7 @@ void Game::Draw(const GameTimer& gt)
 
     // A command list can be reset after it has been added to the command queue
     // via ExecuteCommandList. Reusing the command list reuses memory.
-    if (mIsWireframe)
-    {
-        ThrowIfFailed(mCommandList->Reset(cmdListAlloc.Get(), mPSOs["opaque_wireframe"].Get()));
-    }
-    else
-    {
-        ThrowIfFailed(mCommandList->Reset(cmdListAlloc.Get(), mPSOs["opaque"].Get()));
-    }
+    ThrowIfFailed(mCommandList->Reset(cmdListAlloc.Get(), mPSOs["opaque"].Get()));
 
     // ========================== 1st: Shadow Pass ============================
     // Set the descriptor heaps to the command list.
@@ -250,7 +244,10 @@ void Game::Draw(const GameTimer& gt)
     mCommandList->SetGraphicsRootDescriptorTable(3, mCbvSrvUavDescriptorHeap->GetGPUHandle(mSkyTexHeapIndex));
 
     // Draw render items and set pipeline states
-    mCommandList->SetPipelineState(mPSOs["opaque"].Get());
+    if (mIsWireframe)
+        mCommandList->SetPipelineState(mPSOs["opaque_wireframe"].Get());
+    else
+        mCommandList->SetPipelineState(mPSOs["opaque"].Get());
     DrawRenderItems(mCommandList.Get(), mRitemLayer[(int)RenderLayer::Opaque]);
 
     //mCommandList->SetPipelineState(mPSOs["alphaTested"].Get());
@@ -522,13 +519,13 @@ void Game::UpdateMainPassCB(const GameTimer& gt)
     mMainPassCB.DeltaTime = gt.DeltaTime();
 
     // Lights
-    mMainPassCB.AmbientLight = { 0.25f, 0.25f, 0.35f, 1.0f };
+    //mMainPassCB.AmbientLight = { 0.25f, 0.25f, 0.35f, 1.0f };
     mMainPassCB.Lights[0].Direction = mRotatedLightDirections[0];
     mMainPassCB.Lights[0].Strength = { 0.9f, 0.8f, 0.7f };
-    mMainPassCB.Lights[1].Direction = mRotatedLightDirections[1];
-    mMainPassCB.Lights[1].Strength = { 0.4f, 0.4f, 0.4f };
-    mMainPassCB.Lights[2].Direction = mRotatedLightDirections[2];
-    mMainPassCB.Lights[2].Strength = { 0.2f, 0.2f, 0.2f };
+    //mMainPassCB.Lights[1].Direction = mRotatedLightDirections[1];
+    //mMainPassCB.Lights[1].Strength = { 0.4f, 0.4f, 0.4f };
+    //mMainPassCB.Lights[2].Direction = mRotatedLightDirections[2];
+    //mMainPassCB.Lights[2].Strength = { 0.2f, 0.2f, 0.2f };
 
     auto currPassCB = mCurrFrameResource->PassCB.get();
     currPassCB->CopyData(0, mMainPassCB);
@@ -626,6 +623,8 @@ void Game::LoadTextures()
         "whiteTex",
         "crate01Tex",
         "crate02Tex",
+        "checkboardTex",
+        "tileTex",
         "skyCubeMap",
     };
 
@@ -638,6 +637,8 @@ void Game::LoadTextures()
         L"white1x1.dds",
         L"WoodCrate01.dds",
         L"WoodCrate02.dds",
+        L"checkboard.dds",
+        L"tile.dds",
         L"Skyboxes/sunsetcube1024.dds",
     };
 
@@ -723,13 +724,15 @@ void Game::BuildDescriptorHeaps()
     //
     // Fill out the heap with actual descriptors.
     //
-    mCbvSrvUavDescriptorHeap->CreateSrvDescriptor(md3dDevice, mTextures->GetTextureResource("bricksTex").Get(),  D3D12_SRV_DIMENSION_TEXTURE2D, DIFFUSE_MAP);
-    mCbvSrvUavDescriptorHeap->CreateSrvDescriptor(md3dDevice, mTextures->GetTextureResource("waterTex").Get(),   D3D12_SRV_DIMENSION_TEXTURE2D, DIFFUSE_MAP);
-    mCbvSrvUavDescriptorHeap->CreateSrvDescriptor(md3dDevice, mTextures->GetTextureResource("crate01Tex").Get(), D3D12_SRV_DIMENSION_TEXTURE2D, DIFFUSE_MAP);
-    mCbvSrvUavDescriptorHeap->CreateSrvDescriptor(md3dDevice, mTextures->GetTextureResource("crate02Tex").Get(), D3D12_SRV_DIMENSION_TEXTURE2D, DIFFUSE_MAP);
-    mCbvSrvUavDescriptorHeap->CreateSrvDescriptor(md3dDevice, mTextures->GetTextureResource("iceTex").Get(),     D3D12_SRV_DIMENSION_TEXTURE2D, DIFFUSE_MAP);
-    mCbvSrvUavDescriptorHeap->CreateSrvDescriptor(md3dDevice, mTextures->GetTextureResource("grassTex").Get(),   D3D12_SRV_DIMENSION_TEXTURE2D, DIFFUSE_MAP);
-    mCbvSrvUavDescriptorHeap->CreateSrvDescriptor(md3dDevice, mTextures->GetTextureResource("whiteTex").Get(),   D3D12_SRV_DIMENSION_TEXTURE2D, DIFFUSE_MAP);
+    mCbvSrvUavDescriptorHeap->CreateSrvDescriptor(md3dDevice, mTextures->GetTextureResource("bricksTex").Get(),     D3D12_SRV_DIMENSION_TEXTURE2D, DIFFUSE_MAP);
+    mCbvSrvUavDescriptorHeap->CreateSrvDescriptor(md3dDevice, mTextures->GetTextureResource("waterTex").Get(),      D3D12_SRV_DIMENSION_TEXTURE2D, DIFFUSE_MAP);
+    mCbvSrvUavDescriptorHeap->CreateSrvDescriptor(md3dDevice, mTextures->GetTextureResource("crate01Tex").Get(),    D3D12_SRV_DIMENSION_TEXTURE2D, DIFFUSE_MAP);
+    mCbvSrvUavDescriptorHeap->CreateSrvDescriptor(md3dDevice, mTextures->GetTextureResource("crate02Tex").Get(),    D3D12_SRV_DIMENSION_TEXTURE2D, DIFFUSE_MAP);
+    mCbvSrvUavDescriptorHeap->CreateSrvDescriptor(md3dDevice, mTextures->GetTextureResource("iceTex").Get(),        D3D12_SRV_DIMENSION_TEXTURE2D, DIFFUSE_MAP);
+    mCbvSrvUavDescriptorHeap->CreateSrvDescriptor(md3dDevice, mTextures->GetTextureResource("grassTex").Get(),      D3D12_SRV_DIMENSION_TEXTURE2D, DIFFUSE_MAP);
+    mCbvSrvUavDescriptorHeap->CreateSrvDescriptor(md3dDevice, mTextures->GetTextureResource("whiteTex").Get(),      D3D12_SRV_DIMENSION_TEXTURE2D, DIFFUSE_MAP);
+    mCbvSrvUavDescriptorHeap->CreateSrvDescriptor(md3dDevice, mTextures->GetTextureResource("checkboardTex").Get(), D3D12_SRV_DIMENSION_TEXTURE2D, DIFFUSE_MAP);
+    mCbvSrvUavDescriptorHeap->CreateSrvDescriptor(md3dDevice, mTextures->GetTextureResource("tileTex").Get(),       D3D12_SRV_DIMENSION_TEXTURE2D, DIFFUSE_MAP);
 
     // Sky cube map
     mSkyTexHeapIndex = mCbvSrvUavDescriptorHeap->GetLastDescIndex();
@@ -1010,9 +1013,25 @@ void Game::BuildMaterials()
     mirror->SetRoughness(0.1f);
     mMaterials->AddMaterial(mirror);
 
+    auto checkboard = Material::Create("checkboard");
+    checkboard->SetMatCBIndex(7);
+    checkboard->SetDiffuseSrvHeapIndex(7);
+    checkboard->SetDiffuseAlbedo(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f));
+    checkboard->SetFresnel(XMFLOAT3(0.1f, 0.1f, 0.1f));
+    checkboard->SetRoughness(1.0f);
+    mMaterials->AddMaterial(checkboard);
+
+    auto tile = Material::Create("tile");
+    tile->SetMatCBIndex(8);
+    tile->SetDiffuseSrvHeapIndex(8);
+    tile->SetDiffuseAlbedo(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f));
+    tile->SetFresnel(XMFLOAT3(0.05f, 0.05f, 0.05f));
+    tile->SetRoughness(1.0f);
+    mMaterials->AddMaterial(tile);
+
     auto sky = Material::Create("sky");
-    sky->SetMatCBIndex(7);
-    sky->SetDiffuseSrvHeapIndex(7);
+    sky->SetMatCBIndex(9);
+    sky->SetDiffuseSrvHeapIndex(9);
     sky->SetDiffuseAlbedo(XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f));
     sky->SetFresnel(XMFLOAT3(0.1f, 0.1f, 0.1f));
     sky->SetRoughness(1.0f);
@@ -1034,7 +1053,6 @@ void Game::BuildRenderItems()
     skyRitem->World = MathHelper::Identity4x4();
     skyRitem->TexTransform = MathHelper::Identity4x4();
     skyRitem->ObjCBIndex = 0;
-    skyRitem->Mat = mMaterials->GetMaterial("sky").get();
     skyRitem->Geo = mGeoBuilder->GetMeshGeo("shapeGeo");
     skyRitem->PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
     skyRitem->IndexCount = skyRitem->Geo->DrawArgs["sphere"].IndexCount;
@@ -1046,6 +1064,7 @@ void Game::BuildRenderItems()
     instanceCount = 1;
     skyRitem->Instances.resize(instanceCount);
     XMStoreFloat4x4(&skyRitem->Instances[0].World, XMMatrixScaling(5000.0f, 5000.0f, 5000.0f));
+    skyRitem->Instances[0].MaterialIndex = mMaterials->GetMaterial("sky")->GetMatCBIndex();
 
     skyRitem->instanceBufferID = instanceBufferID++;
     mInstanceCounts.push_back(instanceCount);
@@ -1057,7 +1076,6 @@ void Game::BuildRenderItems()
     auto cylinderRitem = std::make_unique<RenderItem>();
     XMStoreFloat4x4(&cylinderRitem->World, XMMatrixTranslation(3.0f, 2.0f, -9.0f));
     cylinderRitem->ObjCBIndex = 2;
-    cylinderRitem->Mat = mMaterials->GetMaterial("crate01").get();
     cylinderRitem->Geo = mGeoBuilder->GetMeshGeo("shapeGeo");
     cylinderRitem->PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
     cylinderRitem->InstanceCount = 0;
@@ -1067,7 +1085,7 @@ void Game::BuildRenderItems()
     cylinderRitem->Bounds = cylinderRitem->Geo->DrawArgs["cylinder"].Bounds;
 
     // Generate instance data for box render item.
-    const int n = 3;
+    const int n = 1;
     instanceCount = n * n * n;
     cylinderRitem->Instances.resize(instanceCount);
 
@@ -1078,9 +1096,9 @@ void Game::BuildRenderItems()
     float x = -0.5f * width;
     float y = 5.0f;
     float z = -0.5f * depth;
-    float dx = width / (n - 1);
-    float dy = height / (n - 1) / 2;
-    float dz = depth / (n - 1);
+    float dx = width / n;
+    float dy = height / n / 2;
+    float dz = depth / n;
     for (int k = 0; k < n; ++k)
     {
         for (int i = 0; i < n; ++i)
@@ -1089,14 +1107,13 @@ void Game::BuildRenderItems()
             {
                 int index = k * n * n + i * n + j;
 
-                auto cylinderTransform = XMMatrixScaling(3.0f, 3.0f, 3.0f);
+                auto cylinderTransform = XMMatrixScaling(2.0f, 2.0f, 2.0f);
                 cylinderTransform *= XMMatrixRotationX(index % 6 * 10.0f);
                 cylinderTransform *= XMMatrixRotationZ(index % 6 * 15.0f);
                 cylinderTransform *= XMMatrixTranslation(x + j * dx, y + i * dy, z + k * dz);
                 XMStoreFloat4x4(&cylinderRitem->Instances[index].World, cylinderTransform);
 
                 XMStoreFloat4x4(&cylinderRitem->Instances[index].TexTransform, XMMatrixScaling(2.0f, 2.0f, 1.0f));
-                //boxRitem->Instances[index].MaterialIndex = index % 4 + 2;
                 cylinderRitem->Instances[index].MaterialIndex = index % 6 + 1;
             }
         }
@@ -1112,7 +1129,6 @@ void Game::BuildRenderItems()
     auto floorRitem = std::make_unique<RenderItem>();
     floorRitem->World = MathHelper::Identity4x4();
     floorRitem->ObjCBIndex = 3;
-    floorRitem->Mat = mMaterials->GetMaterial("bricks").get();
     floorRitem->Geo = mGeoBuilder->GetMeshGeo("shapeGeo");
     floorRitem->PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
     floorRitem->IndexCount = floorRitem->Geo->DrawArgs["grid"].IndexCount;
@@ -1125,6 +1141,7 @@ void Game::BuildRenderItems()
     floorRitem->Instances.resize(instanceCount);
     XMStoreFloat4x4(&floorRitem->Instances[0].World, XMMatrixScaling(2.2f, 1.0f, 2.0f));
     XMStoreFloat4x4(&floorRitem->Instances[0].TexTransform, XMMatrixScaling(7.0f, 7.0f, 7.0f));
+    floorRitem->Instances[0].MaterialIndex = mMaterials->GetMaterial("tile")->GetMatCBIndex();
 
     floorRitem->instanceBufferID = instanceBufferID++;
     mInstanceCounts.push_back(instanceCount);
@@ -1132,10 +1149,33 @@ void Game::BuildRenderItems()
     mRitemLayer[(int)RenderLayer::Opaque].push_back(floorRitem.get());
 
 
+    // 4 - Car Model
+    auto carRitem = std::make_unique<RenderItem>();
+    carRitem->World = MathHelper::Identity4x4();
+    carRitem->ObjCBIndex = 4;
+    carRitem->Geo = mGeoBuilder->GetMeshGeo("carModel");
+    carRitem->PrimitiveType = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+    carRitem->IndexCount = carRitem->Geo->DrawArgs["carModel"].IndexCount;
+    carRitem->StartIndexLocation = carRitem->Geo->DrawArgs["carModel"].StartIndexLocation;
+    carRitem->BaseVertexLocation = carRitem->Geo->DrawArgs["carModel"].BaseVertexLocation;
+    carRitem->Bounds = carRitem->Geo->DrawArgs["carModel"].Bounds;
+
+    // Only one car model needed
+    instanceCount = 1;
+    carRitem->Instances.resize(instanceCount);
+    XMStoreFloat4x4(&carRitem->Instances[0].World, XMMatrixScaling(2.5f, 2.5f, 2.5f) * XMMatrixTranslation(0.0f, 5.0f, 0.0f));
+    carRitem->Instances[0].MaterialIndex = mMaterials->GetMaterial("mirror")->GetMatCBIndex();
+
+    carRitem->instanceBufferID = instanceBufferID++;
+    mInstanceCounts.push_back(instanceCount);
+    totalInstanceCount += instanceCount;
+    mRitemLayer[(int)RenderLayer::Opaque].push_back(carRitem.get());
+
     // Push all render items to list
     mAllRitems.push_back(std::move(cylinderRitem));
     mAllRitems.push_back(std::move(skyRitem));
     mAllRitems.push_back(std::move(floorRitem));
+    mAllRitems.push_back(std::move(carRitem));
 }
 
 #pragma endregion
@@ -1207,6 +1247,8 @@ void Game::DrawRenderItems(ID3D12GraphicsCommandList* cmdList, const std::vector
 // ------------------------------------------------------------------
 void Game::DrawGUI()
 {
+    //ImGui::ShowDemoWindow();
+
     const float PAD = 10.0f;
     static int corner = 0;
     ImGuiIO& io = ImGui::GetIO();

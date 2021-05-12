@@ -1,4 +1,4 @@
-project (_PROJECT_NAME_2)
+project (_PROJECT_NAME_1)
     kind "WindowedApp"
     language "C++"
 
@@ -12,7 +12,7 @@ project (_PROJECT_NAME_2)
 	{ 
 		"src/**.h", "src/**.cpp",
 		"%{IncludeDir.Engine}/**.h", "%{IncludeDir.Engine}/**.cpp",
-		"%{IncludeDir.ImGui}/**.h", "%{IncludeDir.ImGui}/**.cpp",
+		"%{IncludeDir.imgui}/**.h", "%{IncludeDir.imgui}/**.cpp",
 	}
 
 	excludes 
@@ -22,12 +22,13 @@ project (_PROJECT_NAME_2)
 	includedirs
     {
         "src",
-        "%{IncludeDir.ImGui}",
-		"%{IncludeDir.Engine}"		
+        "%{IncludeDir.imgui}",
+		"%{IncludeDir.assimp}",
+		"%{IncludeDir.Engine}",
     }
 
-	links 
-	{ 
+	links
+	{
 		"d3dcompiler", 
 		"d3d12", 
 		"dxgi",

@@ -31,6 +31,9 @@
     <Filter Include="src\demo">
       <UniqueIdentifier>{01C12ECF-ED8D-89DA-16A7-778202D3BE68}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Engine\Engine\Shaders">
+      <UniqueIdentifier>{9e435b72-f1bc-47a3-a899-d9a5cc2c5eab}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Engine\Engine\Common\Camera.h">
@@ -43,6 +46,9 @@
       <Filter>Engine\Engine\Common</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Engine\Engine\Common\DXUtil.h">
+      <Filter>Engine\Engine\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Engine\Engine\Common\Defines.h">
       <Filter>Engine\Engine\Common</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Engine\Engine\Common\GameTimer.h">
@@ -188,5 +194,28 @@
     <ClCompile Include="src\lmpch.cpp">
       <Filter>src</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="..\..\Engine\Engine\Shaders\Common.hlsl">
+      <Filter>Engine\Engine\Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\..\Engine\Engine\Shaders\Default.hlsl">
+      <Filter>Engine\Engine\Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\..\Engine\Engine\Shaders\LightingUtil.hlsl">
+      <Filter>Engine\Engine\Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\..\Engine\Engine\Shaders\MathUtil.hlsl">
+      <Filter>Engine\Engine\Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\..\Engine\Engine\Shaders\ShadowDebug.hlsl">
+      <Filter>Engine\Engine\Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\..\Engine\Engine\Shaders\Shadows.hlsl">
+      <Filter>Engine\Engine\Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="..\..\Engine\Engine\Shaders\Sky.hlsl">
+      <Filter>Engine\Engine\Shaders</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>
