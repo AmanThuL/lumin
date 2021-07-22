@@ -1,24 +1,29 @@
-include "Externals/premake/premake_utils/lumine_premake_util.lua"
+include "Tools/Premake/solution_items.lua"
+include "Tools/Premake/lumine_premake_util.lua"
+include "Dependencies.lua"
 
-workspace (_RENDERER_NAME)
-    configurations { "Debug", "Release" }
-    platforms { "x64" }
-    startproject (_PROJECT_NAME_2)
+workspace (_WORKSPACE_NAME)
+    platforms { "Win64" }
+    startproject (_PROJECT_ENGINE)
 
-    filter "platforms:x64"
-        system "Windows"
-        architecture "x64"
-		
+    configurations 
+	{ 
+		"Debug", 
+		"Release"
+	}
+	
+	filter "platforms:Win64"
+		system "Windows"
+		architecture "x86_64"
+	
 	flags
 	{
 		"MultiProcessorCompile"
 	}
 
--- Include directories relative to root folder (solution directory)
-IncludeDir = {}
-IncludeDir["imgui"] = "%{wks.location}/Engine/Externals/imgui"
-IncludeDir["assimp"] = "%{wks.location}/Engine/Externals/assimp/include"
-IncludeDir["Engine"] = "%{wks.location}/Engine/Engine"
+group "Dependencies"
+	include "Source/Externals/imgui"
+group ""
 
-group "Projects"
-	include ("Projects/" .. _PROJECT_NAME_1)
+include ("Source/" .. _PROJECT_CORE)
+include ("Source/" .. _PROJECT_ENGINE)

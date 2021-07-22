@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="GUI">
+      <UniqueIdentifier>{2AEC870B-96F5-877C-1F71-9E7C8B79937C}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Math">
+      <UniqueIdentifier>{AFF4887C-9B2B-8A0D-4418-7010302E060F}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="RenderPasses">
+      <UniqueIdentifier>{F4BC7120-E01F-01C5-89A5-397B75E7CC47}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utils">
+      <UniqueIdentifier>{F68B420E-62A0-6ABF-2B22-0E1F97F566F0}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Camera.h" />
+    <ClInclude Include="DXCore.h" />
+    <ClInclude Include="Defines.h" />
+    <ClInclude Include="DescriptorHeap.h" />
+    <ClInclude Include="FrameResource.h" />
+    <ClInclude Include="GUI\GUI.h">
+      <Filter>GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="GameTimer.h" />
+    <ClInclude Include="GeoBuilder.h" />
+    <ClInclude Include="GeometryGenerator.h" />
+    <ClInclude Include="Lumine.h" />
+    <ClInclude Include="Material.h" />
+    <ClInclude Include="Math\MathHelper.h">
+      <Filter>Math</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderItem.h" />
+    <ClInclude Include="RenderPasses\ShadowMap.h">
+      <Filter>RenderPasses</Filter>
+    </ClInclude>
+    <ClInclude Include="Texture.h" />
+    <ClInclude Include="UploadBuffer.h" />
+    <ClInclude Include="Utils\DDSTextureLoader.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="Utils\DXUtil.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="d3dx12.h" />
+    <ClInclude Include="lmpch.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="DXCore.cpp" />
+    <ClCompile Include="DescriptorHeap.cpp" />
+    <ClCompile Include="FrameResource.cpp" />
+    <ClCompile Include="GUI\GUI.cpp">
+      <Filter>GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="GameTimer.cpp" />
+    <ClCompile Include="GeoBuilder.cpp" />
+    <ClCompile Include="GeometryGenerator.cpp" />
+    <ClCompile Include="Material.cpp" />
+    <ClCompile Include="Math\MathHelper.cpp">
+      <Filter>Math</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderPasses\ShadowMap.cpp">
+      <Filter>RenderPasses</Filter>
+    </ClCompile>
+    <ClCompile Include="Texture.cpp" />
+    <ClCompile Include="Utils\DDSTextureLoader.cpp">
+      <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="Utils\DXUtil.cpp">
+      <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="lmpch.cpp" />
+  </ItemGroup>
+</Project>

@@ -1,2 +1,2 @@
-call Externals\premake\bin\premake5.exe vs2019
+call Tools\Premake\premake5.exe vs2019
 PAUSE
