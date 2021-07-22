@@ -101,11 +101,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="src\demo\Game.h" />
+    <ClInclude Include="Game.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\demo\Game.cpp" />
-    <ClCompile Include="src\demo\Main.cpp" />
+    <ClCompile Include="Game.cpp" />
+    <ClCompile Include="Main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Core\Core.vcxproj">
