@@ -352,6 +352,3 @@ MigrationBackup/
 # Binaries
 bin-int/
 !Externals/premake/bin/
-
-# Assets
-Models/
